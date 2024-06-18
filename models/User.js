@@ -5,12 +5,25 @@ const UserSchema = new mongoose.Schema({
     nome: { type: String, required: true },
     sobrenome: { type: String, required: true },
     cpf: { type: String, required: true, unique: true },
-    nascimento: { type: Date, required: true },
+    nascimento: { type: Date, required: false },
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true },
+    isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
     tokenExpiry: { type: Date },
-    isVerified: { type: Boolean, default: false }
+    profilePicture: { type: String },
+    address: {
+        street: { type: String },
+        number: { type: String },
+        district: { type: String },
+        city: { type: String }
+    },
+    additionalInfo: {
+        maritalStatus: { type: String },
+        contactPhone: { type: String },
+        backupPhone: { type: String }
+    },
+    profileCompleted: { type: Boolean, default: false }
 });
 
 UserSchema.methods.comparePassword = function (senha) {

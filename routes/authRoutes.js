@@ -123,8 +123,11 @@ router.post('/login', async (req, res) => {
         // Cria um token JWT para o usuário
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        // Retorna o token ao cliente
-        res.status(200).json({ token });
+        // Verifica se é o primeiro login do usuário
+        const firstLogin = !user.profileCompleted;
+
+        // Retorna o token e o status do primeiro login ao cliente
+        res.status(200).json({ token, firstLogin });
 
     } catch (error) {
         console.error('Erro ao fazer login:', error);
