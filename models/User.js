@@ -10,6 +10,9 @@ const UserSchema = new mongoose.Schema({
     senha: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
+    emailVerificationToken: {
+        type: String
+    },
     tokenExpiry: { type: Date },
     profilePicture: { type: String },
     address: {

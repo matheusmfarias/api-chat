@@ -4,7 +4,8 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const User = require('../models/User');
-
+const { sendConfirmationEmail } = require('../services/emailService'); // Usando o serviço existente
+const { createToken, encrypt } = require('../services/tokenService');
 const router = express.Router();
 
 // Configuração do Multer
@@ -131,7 +132,6 @@ router.get('/candidato', auth, async (req, res) => {
     }
 });
 
-
 // Endpoint para atualizar os dados do usuário
 router.put('/candidato', auth, upload.single('profilePicture'), async (req, res) => {
     try {
@@ -181,5 +181,77 @@ router.put('/candidato', auth, upload.single('profilePicture'), async (req, res)
         res.status(500).send('Erro ao atualizar os dados do usuário');
     }
 });
+
+// Endpoint para solicitar a alteração de e-mail
+router.post('/change-email', auth, async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = req.user;
+        const emailVerificationToken = createToken();
+        user.emailVerificationToken = emailVerificationToken;
+        user.tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+        await user.save();
+
+        sendConfirmationEmail(email, emailVerificationToken);
+
+        res.status(200).send('Um token de verificação foi enviado para o novo e-mail.');
+    } catch (error) {
+        console.error('Erro ao solicitar a alteração de e-mail:', error);
+        res.status(500).send('Erro ao solicitar a alteração de e-mail.');
+    }
+});
+
+// Endpoint para verificar o token de e-mail
+router.post('/verify-email', auth, async (req, res) => {
+    const { email, verificationToken } = req.body;
+    try {
+        console.log('Received email:', email);
+        console.log('Received verificationToken:', verificationToken);
+
+        const user = await User.findOne({
+            _id: req.user._id,
+            emailVerificationToken: verificationToken,
+            tokenExpiry: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).send('Token inválido ou expirado.');
+        }
+
+        user.email = email;
+        user.emailVerificationToken = undefined;
+        user.tokenExpiry = undefined;
+        await user.save();
+
+        res.status(200).send('E-mail verificado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao verificar o token:', error);
+        res.status(500).send('Erro ao verificar o token.');
+    }
+});
+
+// Endpoint para reenviar o token de verificação de e-mail
+router.post('/resend-email-token', auth, async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = req.user;
+        const emailVerificationToken = createToken();
+        user.emailVerificationToken = emailVerificationToken;
+        user.tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+        await user.save();
+
+        sendConfirmationEmail(email, emailVerificationToken);
+
+        res.status(200).send('Token reenviado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao reenviar o token de e-mail:', error);
+        res.status(500).send('Erro ao reenviar o token de e-mail.');
+    }
+});
+
+
+
+
+
 
 module.exports = router;
