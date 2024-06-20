@@ -25,7 +25,7 @@ const UserSchema = new mongoose.Schema({
         maritalStatus: { type: String },
         contactPhone: { type: String },
         backupPhone: { type: String },
-        rg: { type: String },
+        rg: { type: String, unique: true },
         cnh: { type: String },
         cnhTypes: [{ type: String }]
     },
