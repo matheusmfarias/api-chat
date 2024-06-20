@@ -80,17 +80,29 @@ router.post('/address', auth, async (req, res) => {
     }
 });
 
-// Atualizar informações adicionais
 router.post('/additional-info', auth, async (req, res) => {
     try {
-        const user = req.user;
-        user.additionalInfo = req.body;
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).send('Usuário não encontrado');
+        }
+
+        user.additionalInfo = {
+            ...user.additionalInfo,
+            ...req.body
+        };
+
+        if (req.body.maritalStatus) {
+            user.additionalInfo.maritalStatus = req.body.maritalStatus;
+        }
+
         await user.save();
         res.status(200).send('Informações adicionais atualizadas com sucesso');
     } catch (error) {
         res.status(400).send('Erro ao atualizar informações adicionais');
     }
 });
+
 
 // Atualizar status de profileCompleted do usuário
 router.post('/complete-setup', auth, async (req, res) => {
@@ -146,9 +158,12 @@ router.put('/candidato', auth, upload.single('profilePicture'), async (req, res)
         user.nome = req.body.firstName || user.nome;
         user.sobrenome = req.body.lastName || user.sobrenome;
         user.additionalInfo = {
-            maritialStatus: req.body.maritalStatus || user.additionalInfo.maritialStatus,
+            maritalStatus: req.body.maritalStatus || user.additionalInfo.maritalStatus,
             contactPhone: req.body.contactPhone || user.additionalInfo.contactPhone,
-            backupPhone: req.body.backupPhone || user.additionalInfo.backupPhone
+            backupPhone: req.body.backupPhone || user.additionalInfo.backupPhone,
+            rg: req.body.rg || user.additionalInfo.rg,
+            cnh: req.body.cnh || user.additionalInfo.cnh,
+            cnhTypes: req.body.cnhTypes || user.additionalInfo.cnhTypes
         };
         user.cpf = req.body.cpf || user.cpf;
         user.nascimento = req.body.birthDate || user.nascimento;

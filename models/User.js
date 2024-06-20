@@ -24,10 +24,14 @@ const UserSchema = new mongoose.Schema({
     additionalInfo: {
         maritalStatus: { type: String },
         contactPhone: { type: String },
-        backupPhone: { type: String }
+        backupPhone: { type: String },
+        rg: { type: String },
+        cnh: { type: String },
+        cnhTypes: [{ type: String }]
     },
     profileCompleted: { type: Boolean, default: false }
 });
+
 
 UserSchema.methods.comparePassword = function (senha) {
     return bcrypt.compare(senha, this.senha);
