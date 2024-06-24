@@ -198,6 +198,166 @@ const resendEmailToken = async (req, res) => {
     }
 };
 
+// Adicionar uma experiência
+const addExperience = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        if (!user.experiences) {
+            user.experiences = [];
+        }
+
+        user.experiences.push(req.body);
+        await user.save();
+        res.status(200).send({ message: 'Experiência adicionada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao adicionar experiência:', error);
+        res.status(500).send('Erro ao adicionar experiência');
+    }
+};
+
+// Atualizar uma experiência
+const updateExperience = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        const experience = user.experiences.id(req.params.expId);
+        if (!experience) return res.status(404).send('Experiência não encontrada');
+
+        Object.assign(experience, req.body);
+        await user.save();
+        res.status(200).send({ message: 'Experiência atualizada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao atualizar experiência:', error);
+        res.status(500).send('Erro ao atualizar experiência');
+    }
+};
+
+// Excluir uma experiência
+const deleteExperience = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { experiences: { _id: req.params.expId } } },
+            { new: true }
+        );
+        res.status(200).send({ message: 'Experiência removida com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao remover experiência:', error);
+        res.status(500).send('Erro ao remover experiência');
+    }
+};
+
+// Buscar todas as experiências do usuário
+const getExperiences = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('experiences');
+        if (!user) return res.status(404).send('Usuário não encontrado');
+        res.status(200).send(user.experiences);
+    } catch (error) {
+        console.error('Erro ao buscar experiências:', error);
+        res.status(500).send('Erro ao buscar experiências');
+    }
+};
+
+// Função para obter uma experiência específica pelo ID
+const getExperienceById = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        const experience = user.experiences.id(req.params.expId);
+        if (!experience) return res.status(404).send('Experiência não encontrada');
+
+        res.status(200).json(experience);
+    } catch (error) {
+        console.error('Erro ao buscar a experiência:', error);
+        res.status(500).send('Erro ao buscar a experiência');
+    }
+};
+
+// Adicionar uma experiência
+const addFormacao = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        if (!user.formacao) {
+            user.formacao = [];
+        }
+
+        user.formacao.push(req.body);
+        await user.save();
+        res.status(200).send({ message: 'Formação adicionada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao adicionar Formação:', error);
+        res.status(500).send('Erro ao adicionar Formação');
+    }
+};
+
+// Atualizar uma experiência
+const updateFormacao = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        const formacao = user.formacao.id(req.params.formacaoId);
+        if (!formacao) return res.status(404).send('Formação não encontrada');
+
+        Object.assign(formacao, req.body);
+        await user.save();
+        res.status(200).send({ message: 'Formação atualizada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao atualizar Formação:', error);
+        res.status(500).send('Erro ao atualizar Formação');
+    }
+};
+
+// Excluir uma experiência
+const deleteFormacao = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { formacao: { _id: req.params.formacaoId } } },
+            { new: true }
+        );
+        res.status(200).send({ message: 'Formação removida com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao remover Formação:', error);
+        res.status(500).send('Erro ao remover Formação');
+    }
+};
+
+// Buscar todas as experiências do usuário
+const getFormacao = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('formacao');
+        if (!user) return res.status(404).send('Usuário não encontrado');
+        res.status(200).send(user.formacao);
+    } catch (error) {
+        console.error('Erro ao buscar Formação:', error);
+        res.status(500).send('Erro ao buscar Formação');
+    }
+};
+
+// Função para obter uma experiência específica pelo ID
+const getFormacaoById = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        const formacao = user.formacao.id(req.params.formacaoId);
+        if (!formacao) return res.status(404).send('Formação não encontrada');
+
+        res.status(200).json(formacao);
+    } catch (error) {
+        console.error('Erro ao buscar a formação:', error);
+        res.status(500).send('Erro ao buscar a formação');
+    }
+};
+
 module.exports = {
     updateProfilePicture,
     updateCandidato,
@@ -208,5 +368,15 @@ module.exports = {
     getCandidato,
     requestEmailChange,
     verifyEmailToken,
-    resendEmailToken
+    resendEmailToken,
+    addExperience,
+    updateExperience,
+    deleteExperience,
+    getExperiences,
+    getExperienceById,
+    addFormacao,
+    updateFormacao,
+    deleteFormacao,
+    getFormacao,
+    getFormacaoById
 };

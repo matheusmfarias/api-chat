@@ -1,5 +1,24 @@
+// models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+
+const ExperienceSchema = new mongoose.Schema({
+    empresa: { type: String, required: true },
+    mesInicial: { type: String, required: true },
+    anoInicial: { type: Number, required: true },
+    mesFinal: { type: String, required: false },
+    anoFinal: { type: Number, required: false },
+    funcao: { type: String, required: true },
+    atividades: { type: String, required: true },
+    trabalhoAtualmente: { type: Boolean, required: true, default: false }
+});
+
+const FormacaoSchema = new mongoose.Schema({
+    instituicao: { type: String, required: true },
+    escolaridade: { type: String, required: true },
+    situacao: { type: String, required: true },
+
+});
 
 const UserSchema = new mongoose.Schema({
     nome: { type: String, required: true },
@@ -29,9 +48,10 @@ const UserSchema = new mongoose.Schema({
         cnh: { type: String },
         cnhTypes: [{ type: String }]
     },
+    experiences: { type: [ExperienceSchema], default: [] },
+    formacao: { type: [FormacaoSchema], default: [] },
     profileCompleted: { type: Boolean, default: false }
 });
-
 
 UserSchema.methods.comparePassword = function (senha) {
     return bcrypt.compare(senha, this.senha);
