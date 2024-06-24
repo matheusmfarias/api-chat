@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Admin = require('../models/Admin');
 
 const auth = async (req, res, next) => {
     try {
@@ -9,7 +10,13 @@ const auth = async (req, res, next) => {
         }
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findOne({ _id: decoded.userId });
+        let user;
+
+        if (decoded.role === 'admin') {
+            user = await Admin.findOne({ _id: decoded.userId });
+        } else {
+            user = await User.findOne({ _id: decoded.userId });
+        }
 
         if (!user) {
             throw new Error('User not found');
@@ -17,6 +24,7 @@ const auth = async (req, res, next) => {
 
         req.user = user;
         req.token = token;
+        req.role = decoded.role;
         next();
     } catch (error) {
         console.error('Auth error:', error.message); // Log de erro

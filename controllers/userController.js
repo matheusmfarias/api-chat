@@ -358,6 +358,134 @@ const getFormacaoById = async (req, res) => {
     }
 };
 
+// Buscar todas as informações de um usuário
+const getInformacoes = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('cursos habilidadesProfissionais habilidadesComportamentais objetivos');
+        if (!user) return res.status(404).send('Usuário não encontrado');
+        res.status(200).send(user);
+    } catch (error) {
+        console.error('Erro ao buscar informações:', error);
+        res.status(500).send('Erro ao buscar informações');
+    }
+};
+
+// Adicionar curso
+const addCurso = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        user.cursos.push(req.body.curso);
+        await user.save();
+        res.status(200).send('Curso adicionado com sucesso');
+    } catch (error) {
+        console.error('Erro ao adicionar curso:', error);
+        res.status(500).send('Erro ao adicionar curso');
+    }
+};
+
+// Remover curso
+const removeCurso = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { cursos: req.body.curso } }
+        );
+        res.status(200).send('Curso removido com sucesso');
+    } catch (error) {
+        console.error('Erro ao remover curso:', error);
+        res.status(500).send('Erro ao remover curso');
+    }
+};
+
+// Adicionar habilidade profissional
+const addHabilidadeProfissional = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        user.habilidadesProfissionais.push(req.body.habilidadeProfissional);
+        await user.save();
+        res.status(200).send('Habilidade profissional adicionada com sucesso');
+    } catch (error) {
+        console.error('Erro ao adicionar habilidade profissional:', error);
+        res.status(500).send('Erro ao adicionar habilidade profissional');
+    }
+};
+
+// Remover habilidade profissional
+const removeHabilidadeProfissional = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { habilidadesProfissionais: req.body.habilidadeProfissional } }
+        );
+        res.status(200).send('Habilidade profissional removida com sucesso');
+    } catch (error) {
+        console.error('Erro ao remover habilidade profissional:', error);
+        res.status(500).send('Erro ao remover habilidade profissional');
+    }
+};
+
+// Adicionar habilidade comportamental
+const addHabilidadeComportamental = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        user.habilidadesComportamentais.push(req.body.habilidadeComportamental);
+        await user.save();
+        res.status(200).send('Habilidade comportamental adicionada com sucesso');
+    } catch (error) {
+        console.error('Erro ao adicionar habilidade comportamental:', error);
+        res.status(500).send('Erro ao adicionar habilidade comportamental');
+    }
+};
+
+// Remover habilidade comportamental
+const removeHabilidadeComportamental = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { habilidadesComportamentais: req.body.habilidadeComportamental } }
+        );
+        res.status(200).send('Habilidade comportamental removida com sucesso');
+    } catch (error) {
+        console.error('Erro ao remover habilidade comportamental:', error);
+        res.status(500).send('Erro ao remover habilidade comportamental');
+    }
+};
+
+// Adicionar objetivo
+const addObjetivo = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+
+        user.objetivos.push(req.body.objetivo);
+        await user.save();
+        res.status(200).send('Objetivo adicionado com sucesso');
+    } catch (error) {
+        console.error('Erro ao adicionar objetivo:', error);
+        res.status(500).send('Erro ao adicionar objetivo');
+    }
+};
+
+// Remover objetivo
+const removeObjetivo = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { objetivos: req.body.objetivo } }
+        );
+        res.status(200).send('Objetivo removido com sucesso');
+    } catch (error) {
+        console.error('Erro ao remover objetivo:', error);
+        res.status(500).send('Erro ao remover objetivo');
+    }
+};
+
 module.exports = {
     updateProfilePicture,
     updateCandidato,
@@ -378,5 +506,14 @@ module.exports = {
     updateFormacao,
     deleteFormacao,
     getFormacao,
-    getFormacaoById
+    getFormacaoById,
+    getInformacoes,
+    addCurso,
+    removeCurso,
+    addHabilidadeProfissional,
+    removeHabilidadeProfissional,
+    addHabilidadeComportamental,
+    removeHabilidadeComportamental,
+    addObjetivo,
+    removeObjetivo
 };

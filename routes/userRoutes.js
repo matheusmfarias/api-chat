@@ -30,4 +30,23 @@ router.delete('/formacao/:formacaoId', auth, UserController.deleteFormacao);
 router.get('/formacao', auth, UserController.getFormacao);
 router.get('/formacao/:formacaoId', auth, UserController.getFormacaoById);
 
+// Rota para buscar todas as informações de um usuário
+router.get('/informacoes', auth, UserController.getInformacoes);
+
+// Rotas para cursos
+router.post('/cursos', auth, UserController.addCurso);
+router.delete('/cursos', auth, UserController.removeCurso);
+
+// Rotas para habilidades profissionais
+router.post('/habilidadesProfissionais', auth, UserController.addHabilidadeProfissional);
+router.delete('/habilidadesProfissionais', auth, UserController.removeHabilidadeProfissional);
+
+// Rotas para habilidades comportamentais
+router.post('/habilidadesComportamentais', auth, UserController.addHabilidadeComportamental);
+router.delete('/habilidadesComportamentais', auth, UserController.removeHabilidadeComportamental);
+
+// Rotas para objetivos
+router.post('/objetivos', auth, UserController.addObjetivo);
+router.delete('/objetivos', auth, UserController.removeObjetivo);
+
 module.exports = router;

@@ -2,6 +2,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Admin = require('../models/Admin');
+const Company = require('../models/Company');
 const { sendConfirmationEmail } = require('../services/emailService');
 const { createToken, encrypt } = require('../services/tokenService');
 const router = express.Router();
@@ -26,7 +28,7 @@ router.post('/register', async (req, res) => {
         });
 
         await user.save();
-        
+
         sendConfirmationEmail(email, verificationToken);
 
         res.status(201).send('Usuário cadastrado com sucesso! Verifique seu e-mail para confirmar o cadastro.');
@@ -97,14 +99,21 @@ router.get('/check-verification', async (req, res) => {
     }
 });
 
-// Login do usuário
+// Login do usuário ou administrador
 router.post('/login', async (req, res) => {
     const { email, senha } = req.body;
 
     try {
-        // Verifica se o usuário existe
-        const user = await User.findOne({ email });
+        let user = await User.findOne({ email });
+        let role = 'user';
 
+        // Se o usuário não foi encontrado, procure na coleção de administradores
+        if (!user) {
+            user = await Admin.findOne({ email });
+            role = 'admin';
+        }
+
+        // Verifica se o usuário existe
         if (!user) {
             return res.status(400).send('E-mail ou senha incorretos!');
         }
@@ -115,19 +124,19 @@ router.post('/login', async (req, res) => {
             return res.status(400).send('E-mail ou senha incorretos!');
         }
 
-        // Verifica se o e-mail foi confirmado
-        if (!user.isVerified) {
+        // Verifica se o e-mail foi confirmado (aplica-se apenas para usuários normais)
+        if (role === 'user' && !user.isVerified) {
             return res.status(400).send('E-mail não confirmado. Por favor, verifique seu e-mail.');
         }
 
-        // Cria um token JWT para o usuário
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // Cria um token JWT para o usuário ou administrador
+        const token = jwt.sign({ userId: user._id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        // Verifica se é o primeiro login do usuário
-        const firstLogin = !user.profileCompleted;
+        // Verifica se é o primeiro login do usuário (aplica-se apenas para usuários normais)
+        const firstLogin = role === 'user' ? !user.profileCompleted : false;
 
         // Retorna o token e o status do primeiro login ao cliente
-        res.status(200).json({ token, firstLogin });
+        res.status(200).json({ token, firstLogin, role });
 
     } catch (error) {
         console.error('Erro ao fazer login:', error);
@@ -138,6 +147,36 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
     // Invalida o token no frontend removendo-o do localStorage
     res.status(200).send('Logout realizado com sucesso.');
+});
+
+// Login da empresa
+router.post('/login-empresa', async (req, res) => {
+    const { email, senha } = req.body;
+
+    try {
+        // Verifica se a empresa existe
+        const empresa = await Company.findOne({ email });
+
+        if (!empresa) {
+            return res.status(400).send('E-mail ou senha incorretos!');
+        }
+
+        // Verifica se a senha está correta
+        const isPasswordValid = await bcrypt.compare(senha, empresa.senha);
+        if (!isPasswordValid) {
+            return res.status(400).send('E-mail ou senha incorretos!');
+        }
+
+        // Cria um token JWT para a empresa
+        const token = jwt.sign({ companyId: empresa._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Retorna o token e o papel ao cliente
+        res.status(200).json({ token, role: 'empresa' });
+
+    } catch (error) {
+        console.error('Erro ao fazer login:', error);
+        res.status(500).send('Erro ao fazer login. Por favor, tente novamente mais tarde.');
+    }
 });
 
 

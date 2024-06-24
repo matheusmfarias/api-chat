@@ -1,4 +1,3 @@
-// models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -16,8 +15,7 @@ const ExperienceSchema = new mongoose.Schema({
 const FormacaoSchema = new mongoose.Schema({
     instituicao: { type: String, required: true },
     escolaridade: { type: String, required: true },
-    situacao: { type: String, required: true },
-
+    situacao: { type: String, required: true }
 });
 
 const UserSchema = new mongoose.Schema({
@@ -29,9 +27,7 @@ const UserSchema = new mongoose.Schema({
     senha: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
-    emailVerificationToken: {
-        type: String
-    },
+    emailVerificationToken: { type: String },
     tokenExpiry: { type: Date },
     profilePicture: { type: String },
     address: {
@@ -50,6 +46,10 @@ const UserSchema = new mongoose.Schema({
     },
     experiences: { type: [ExperienceSchema], default: [] },
     formacao: { type: [FormacaoSchema], default: [] },
+    cursos: { type: [String], default: [] },
+    habilidadesProfissionais: { type: [String], default: [] },
+    habilidadesComportamentais: { type: [String], default: [] },
+    objetivos: { type: [String], default: [] },
     profileCompleted: { type: Boolean, default: false }
 });
 
