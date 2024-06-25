@@ -1,4 +1,5 @@
 const Company = require('../models/Company');
+const bcrypt = require('bcryptjs');
 
 const getCurrentCompany = async (req, res) => {
     try {
@@ -13,16 +14,21 @@ const getCurrentCompany = async (req, res) => {
 };
 
 const addCompany = async (req, res) => {
+    const { nome, cnpj, setor, email, senha } = req.body;
     try {
-        const { nome, cnpj, setor, email, senha } = req.body;
-
-        // Verifica se o CNPJ ou email já existem
+        const hashedPassword = await bcrypt.hash(senha, 10);
         const existingCompany = await Company.findOne({ $or: [{ cnpj }, { email }] });
         if (existingCompany) {
             return res.status(400).json({ error: 'CNPJ ou email já cadastrados' });
         }
 
-        const newCompany = new Company({ nome, cnpj, setor, email, senha });
+        const newCompany = new Company({
+            nome,
+            cnpj,
+            setor,
+            email,
+            senha: hashedPassword
+        });
         if (req.file) {
             newCompany.logo = req.file.path;
         }

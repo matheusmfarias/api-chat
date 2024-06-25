@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const CompanySchema = new mongoose.Schema({
     nome: { type: String, required: true },
