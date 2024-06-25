@@ -168,7 +168,7 @@ router.post('/login-empresa', async (req, res) => {
         }
 
         // Cria um token JWT para a empresa
-        const token = jwt.sign({ companyId: empresa._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ companyId: empresa._id, role: 'empresa' }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         // Retorna o token e o papel ao cliente
         res.status(200).json({ token, role: 'empresa' });

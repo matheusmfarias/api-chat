@@ -6,7 +6,7 @@ const CompanyController = require('../controllers/CompanyController');
 
 const router = express.Router();
 
-router.get('/company', auth, CompanyController.getCompany);
+router.get('/me', auth, CompanyController.getCurrentCompany); // Certifique-se de que esta rota está definida
 router.post('/add', auth, admin, upload.single('logo'), CompanyController.addCompany);
 router.get('/', auth, admin, CompanyController.getCompanies);
 router.put('/:id', auth, admin, upload.single('logo'), CompanyController.updateCompany);

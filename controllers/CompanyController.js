@@ -1,9 +1,8 @@
 const Company = require('../models/Company');
-const bcrypt = require('bcryptjs');
 
-const getCompany = async (req, res) => {
+const getCurrentCompany = async (req, res) => {
     try {
-        const company = await Company.findById(req.user.companyId);
+        const company = await Company.findById(req.user._id); // Certifique-se de usar req.user._id
         if (!company) {
             return res.status(404).send('Empresa não encontrada');
         }
@@ -11,7 +10,7 @@ const getCompany = async (req, res) => {
     } catch (error) {
         res.status(500).send('Erro ao buscar dados da empresa');
     }
-}
+};
 
 const addCompany = async (req, res) => {
     try {
@@ -24,6 +23,9 @@ const addCompany = async (req, res) => {
         }
 
         const newCompany = new Company({ nome, cnpj, setor, email, senha });
+        if (req.file) {
+            newCompany.logo = req.file.path;
+        }
         await newCompany.save();
 
         res.status(201).json(newCompany);
@@ -35,44 +37,45 @@ const addCompany = async (req, res) => {
 const getCompanies = async (req, res) => {
     try {
         const companies = await Company.find();
-        res.status(200).send(companies);
+        res.send(companies);
     } catch (error) {
-        res.status(500).send('Erro ao buscar empresas.');
+        res.status(500).send('Erro ao buscar empresas');
     }
 };
 
 const updateCompany = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nome, cnpj, setor, email, senha } = req.body;
-        const updateData = { nome, cnpj, setor, email };
-
-        if (senha) {
-            updateData.senha = await bcrypt.hash(senha, 10);
-        }
+        const updates = req.body;
         if (req.file) {
-            updateData.logo = `/uploads/${req.file.filename}`;
+            updates.logo = req.file.path;
         }
 
-        const company = await Company.findByIdAndUpdate(id, updateData, { new: true });
-        res.status(200).send(company);
+        const company = await Company.findByIdAndUpdate(id, updates, { new: true });
+        if (!company) {
+            return res.status(404).send('Empresa não encontrada');
+        }
+        res.send(company);
     } catch (error) {
-        res.status(500).send('Erro ao atualizar empresa.');
+        res.status(500).send('Erro ao atualizar empresa');
     }
 };
 
 const deleteCompany = async (req, res) => {
     try {
         const { id } = req.params;
-        await Company.findByIdAndDelete(id);
-        res.status(200).send('Empresa deletada com sucesso');
+        const company = await Company.findByIdAndDelete(id);
+        if (!company) {
+            return res.status(404).send('Empresa não encontrada');
+        }
+        res.send('Empresa deletada com sucesso');
     } catch (error) {
-        res.status(500).send('Erro ao deletar empresa.');
+        res.status(500).send('Erro ao deletar empresa');
     }
 };
 
 module.exports = {
-    getCompany,
+    getCurrentCompany,
     addCompany,
     getCompanies,
     updateCompany,
