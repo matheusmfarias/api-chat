@@ -486,6 +486,46 @@ const removeObjetivo = async (req, res) => {
     }
 };
 
+const getCandidatos = async (req, res) => {
+    const { page = 1, limit = 10, search = '' } = req.query;
+    const query = {};
+
+    if (search) {
+        query.$or = [
+            { nome: new RegExp(search, 'i') },
+            { sobrenome: new RegExp(search, 'i') },
+            { email: new RegExp(search, 'i') }
+        ];
+    }
+
+    try {
+        const candidatos = await User.find(query)
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit))
+            .exec();
+        const count = await User.countDocuments(query);
+
+        res.json({
+            candidates: candidatos,
+            totalPages: Math.ceil(count / Number(limit)),
+            currentPage: Number(page)
+        });
+    } catch (error) {
+        res.status(500).send('Erro ao buscar candidatos');
+    }
+};
+
+const getCandidatoById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.candidatoId);
+        if (!user) return res.status(404).send('Usuário não encontrado');
+        res.send(user);
+    } catch (error) {
+        console.error('Erro ao buscar os dados do usuário', error);
+        res.status(500).send('Erro ao buscar os dados do usuário');
+    }
+};
+
 module.exports = {
     updateProfilePicture,
     updateCandidato,
@@ -515,5 +555,7 @@ module.exports = {
     addHabilidadeComportamental,
     removeHabilidadeComportamental,
     addObjetivo,
-    removeObjetivo
+    removeObjetivo,
+    getCandidatos,
+    getCandidatoById,
 };

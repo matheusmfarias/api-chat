@@ -161,6 +161,11 @@ router.post('/login-empresa', async (req, res) => {
             return res.status(400).send('E-mail ou senha incorretos!');
         }
 
+        // Verifica se a empresa está desabilitada
+        if (empresa.isDisabled) {
+            return res.status(403).send('Esta empresa está desabilitada. Entre em contato com o suporte.');
+        }
+
         // Verifica se a senha está correta
         const isPasswordValid = await bcrypt.compare(senha, empresa.senha);
         if (!isPasswordValid) {
@@ -178,6 +183,5 @@ router.post('/login-empresa', async (req, res) => {
         res.status(500).send('Erro ao fazer login. Por favor, tente novamente mais tarde.');
     }
 });
-
 
 module.exports = router;

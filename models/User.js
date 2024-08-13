@@ -15,6 +15,8 @@ const ExperienceSchema = new mongoose.Schema({
 const FormacaoSchema = new mongoose.Schema({
     instituicao: { type: String, required: true },
     escolaridade: { type: String, required: true },
+    curso: { type: String, required: false },
+    grau: { type: String },
     situacao: { type: String, required: true }
 });
 

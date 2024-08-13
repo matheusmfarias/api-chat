@@ -1,9 +1,10 @@
 const Company = require('../models/Company');
 const bcrypt = require('bcryptjs');
+const { validateCNPJ } = require('../utils/validators');
 
 const getCurrentCompany = async (req, res) => {
     try {
-        const company = await Company.findById(req.user._id); // Certifique-se de usar req.user._id
+        const company = await Company.findById(req.user._id);
         if (!company) {
             return res.status(404).send('Empresa não encontrada');
         }
@@ -14,47 +15,123 @@ const getCurrentCompany = async (req, res) => {
 };
 
 const addCompany = async (req, res) => {
-    const { nome, cnpj, setor, email, senha } = req.body;
+    const { nome, cnpj, setor, email, senha, isDisabled } = req.body;
+    console.log("Dados recebidos:", req.body);
     try {
-        const hashedPassword = await bcrypt.hash(senha, 10);
-        const existingCompany = await Company.findOne({ $or: [{ cnpj }, { email }] });
-        if (existingCompany) {
-            return res.status(400).json({ error: 'CNPJ ou email já cadastrados' });
+        if (!nome || !cnpj || !setor || !email || !senha) {
+            return res.status(400).json({ error: 'Todos os campos são obrigatórios!' });
         }
+
+        if (!validateCNPJ(cnpj)) {
+            return res.status(400).json({ error: 'CNPJ inválido!' });
+        }
+
+        const existingCompanyByCNPJ = await Company.findOne({ cnpj });
+        if (existingCompanyByCNPJ) {
+            return res.status(400).json({ error: 'CNPJ já cadastrado!' });
+        }
+
+        const existingCompanyByEmail = await Company.findOne({ email });
+        if (existingCompanyByEmail) {
+            return res.status(400).json({ error: 'Email já cadastrado!' });
+        }
+
+        const hashedPassword = await bcrypt.hash(senha, 10);
 
         const newCompany = new Company({
             nome,
             cnpj,
             setor,
             email,
-            senha: hashedPassword
+            senha: hashedPassword,
+            isDisabled: isDisabled || false
         });
-        if (req.file) {
-            newCompany.logo = req.file.path;
-        }
+
         await newCompany.save();
 
         res.status(201).json(newCompany);
     } catch (error) {
+        console.error('Erro ao adicionar empresa:', error);
         res.status(500).json({ error: 'Erro ao adicionar empresa' });
     }
 };
 
 const getCompanies = async (req, res) => {
+    const { page = 1, limit = 10, search = '', filterStatus = '', sortColumn = 'nome', sortDirection = 'asc' } = req.query;
+    const query = {};
+
+    if (search) {
+        query.$or = [
+            { nome: new RegExp(search, 'i') },
+            { cnpj: new RegExp(search, 'i') },
+            { setor: new RegExp(search, 'i') },
+            { email: new RegExp(search, 'i') }
+        ];
+    }
+
+    if (filterStatus === 'active') {
+        query.isDisabled = false;
+    } else if (filterStatus === 'inactive') {
+        query.isDisabled = true;
+    }
+
+    const sortOptions = {
+        [sortColumn]: sortDirection === 'asc' ? 1 : -1
+    };
+
     try {
-        const companies = await Company.find();
-        res.send(companies);
+        const companies = await Company.find(query)
+            .sort(sortOptions)
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit))
+            .exec();
+
+        const count = await Company.countDocuments(query);
+
+        res.json({
+            companies,
+            totalPages: Math.ceil(count / Number(limit)),
+            currentPage: Number(page)
+        });
     } catch (error) {
         res.status(500).send('Erro ao buscar empresas');
     }
 };
 
 const updateCompany = async (req, res) => {
+    const { id } = req.params;
+    const { nome, cnpj, setor, email, senha, isDisabled } = req.body;
+
     try {
-        const { id } = req.params;
-        const updates = req.body;
-        if (req.file) {
-            updates.logo = req.file.path;
+        if (!nome || !cnpj || !setor || !email) {
+            return res.status(400).json({ error: 'Todos os campos são obrigatórios!' });
+        }
+        
+        if (!validateCNPJ(cnpj)) {
+            return res.status(400).json({ error: 'CNPJ inválido!' });
+        }
+
+        const existingCompanyByCNPJ = await Company.findOne({ cnpj });
+        if (existingCompanyByCNPJ && existingCompanyByCNPJ._id.toString() !== id) {
+            return res.status(400).json({ error: 'CNPJ já cadastrado!' });
+        }
+
+        const existingCompanyByEmail = await Company.findOne({ email });
+        if (existingCompanyByEmail && existingCompanyByEmail._id.toString() !== id) {
+            return res.status(400).json({ error: 'Email já cadastrado!' });
+        }
+
+        const updates = {
+            nome,
+            cnpj,
+            setor,
+            email,
+            isDisabled
+        };
+        
+        // Recriptografa a senha se ela for alterada
+        if (senha && senha !== existingCompanyByEmail.senha) {
+            updates.senha = await bcrypt.hash(senha, 10);
         }
 
         const company = await Company.findByIdAndUpdate(id, updates, { new: true });
@@ -63,9 +140,12 @@ const updateCompany = async (req, res) => {
         }
         res.send(company);
     } catch (error) {
+        console.error('Erro ao atualizar empresa:', error);
         res.status(500).send('Erro ao atualizar empresa');
     }
 };
+
+
 
 const deleteCompany = async (req, res) => {
     try {
@@ -80,10 +160,26 @@ const deleteCompany = async (req, res) => {
     }
 };
 
+const toggleCompanyStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const company = await Company.findById(id);
+        if (!company) {
+            return res.status(404).send('Empresa não encontrada');
+        }
+        company.isDisabled = !company.isDisabled;
+        await company.save();
+        res.send(company);
+    } catch (error) {
+        res.status(500).send('Erro ao alterar status da empresa');
+    }
+};
+
 module.exports = {
     getCurrentCompany,
     addCompany,
     getCompanies,
     updateCompany,
-    deleteCompany
+    deleteCompany,
+    toggleCompanyStatus
 };

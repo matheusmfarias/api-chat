@@ -5,7 +5,7 @@ const UserController = require('../controllers/UserController');
 
 const router = express.Router();
 
-router.put('/profile-picture', auth, upload.single('profilePicture'), UserController.updateProfilePicture);
+router.post('/profile-picture', auth, upload.single('profilePicture'), UserController.updateProfilePicture);
 router.put('/candidato', auth, upload.single('profilePicture'), UserController.updateCandidato);
 router.post('/address', auth, UserController.updateAddress);
 router.post('/additional-info', auth, UserController.updateAdditionalInfo);
@@ -48,5 +48,8 @@ router.delete('/habilidadesComportamentais', auth, UserController.removeHabilida
 // Rotas para objetivos
 router.post('/objetivos', auth, UserController.addObjetivo);
 router.delete('/objetivos', auth, UserController.removeObjetivo);
+
+router.get('/candidatos', auth, UserController.getCandidatos);
+router.get('/candidato/:candidatoId', auth, UserController.getCandidatoById);
 
 module.exports = router;
