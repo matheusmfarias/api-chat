@@ -1,15 +1,27 @@
 const Job = require('../models/Job');
 
 const getJobs = async (req, res) => {
+    const { title, location, modality, type, status, pcd, keyword } = req.query;
+
+    let query = { company: req.user._id };
+
+    // Busca no campo de cargo (title) usando a keyword
+    if (keyword) {
+        query.title = { $regex: keyword, $options: 'i' };
+    }
+
+    if (location) query.location = { $regex: location, $options: 'i' };
+    if (modality) query.modality = modality;
+    if (type) query.type = type;
+    if (status) query.status = status;
+    if (pcd) query.pcd = pcd === 'true';
+
     try {
-        const jobs = await Job.find({ company: req.user._id });
-        if (jobs.length === 0) {
-            return res.status(200).json({ message: 'Nenhuma vaga cadastrada.' });
-        }
-        res.json(jobs);
+        const jobs = await Job.find(query);
+        return res.status(200).json(jobs);
     } catch (error) {
         console.error('Erro ao buscar vagas:', error);
-        res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde.' });
+        return res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde.' });
     }
 };
 
@@ -101,7 +113,7 @@ const toggleJobStatus = async (req, res) => {
             return res.status(404).json({ error: 'Vaga não encontrada.' });
         }
 
-        job.status = job.status === 'Ativo' ? 'Inativo' : 'Ativo';
+        job.status = job.status === 'Ativo' ? 'Inativa' : 'Ativo';
         await job.save();
         res.json(job);
     } catch (error) {
