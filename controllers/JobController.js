@@ -4,7 +4,6 @@ const getJobs = async (req, res) => {
     try {
         const jobs = await Job.find({ company: req.user._id });
         if (jobs.length === 0) {
-            // Retorne um 200 OK com uma mensagem informativa ao invés de um erro 404
             return res.status(200).json({ message: 'Nenhuma vaga cadastrada.' });
         }
         res.json(jobs);
@@ -13,6 +12,7 @@ const getJobs = async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde.' });
     }
 };
+
 
 const addJob = async (req, res) => {
     const {

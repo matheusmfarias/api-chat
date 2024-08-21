@@ -12,7 +12,7 @@ const JobSchema = new mongoose.Schema({
     additionalInfo: { type: String },
     requirements: { type: String },
     offers: { type: String },
-    pcd: { type: String, default: 'Inativo' },
+    pcd: { type: Boolean, default: false },
     salary: { type: String },
     company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true }
 });
