@@ -1,29 +1,51 @@
 const Job = require('../models/Job');
 
 const getJobs = async (req, res) => {
-    const { title, location, modality, type, status, pcd, keyword } = req.query;
+    console.log('getJobs chamado');
+    const { page = 1, limit = 10, search = '', filterStatus = '', sortColumn = 'cargo', sortDirection = 'asc' } = req.query;
+    const query = {};
 
-    let query = { company: req.user._id };
-
-    // Busca no campo de cargo (title) usando a keyword
-    if (keyword) {
-        query.title = { $regex: keyword, $options: 'i' };
+    if (search) {
+        query.$or = [
+            { cargo: new RegExp(search, 'i') },
+            { local: new RegExp(search, 'i') },
+            { modalidade: new RegExp(search, 'i') },
+            { tipo: new RegExp(search, 'i') },
+        ];
     }
 
-    if (location) query.location = { $regex: location, $options: 'i' };
-    if (modality) query.modality = modality;
-    if (type) query.type = type;
-    if (status) query.status = status;
-    if (pcd) query.pcd = pcd === 'true';
+    if (filterStatus === 'active') {
+        query.isDisabled = false;
+    } else if (filterStatus === 'inactive') {
+        query.isDisabled = true;
+    }
+
+    const sortOptions = {
+        [sortColumn]: sortDirection === 'asc' ? 1 : -1
+    };
 
     try {
-        const jobs = await Job.find(query);
-        return res.status(200).json(jobs);
+        console.log('Query:', query);
+        const jobs = await Job.find(query)
+            .sort(sortOptions)
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit))
+            .exec();
+        
+        const count = await Job.countDocuments(query);
+        console.log('Vagas encontradas:', jobs);
+
+        res.json({
+            jobs,
+            totalPages: Math.ceil(count / Number(limit)),
+            currentPage: Number(page)
+        });
     } catch (error) {
         console.error('Erro ao buscar vagas:', error);
         return res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde.' });
     }
 };
+
 
 
 const addJob = async (req, res) => {
