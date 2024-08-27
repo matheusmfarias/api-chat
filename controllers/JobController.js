@@ -1,52 +1,50 @@
 const Job = require('../models/Job');
 
 const getJobs = async (req, res) => {
-    console.log('getJobs chamado');
-    const { page = 1, limit = 10, search = '', filterStatus = '', sortColumn = 'cargo', sortDirection = 'asc' } = req.query;
-    const query = {};
-
-    if (search) {
-        query.$or = [
-            { cargo: new RegExp(search, 'i') },
-            { local: new RegExp(search, 'i') },
-            { modalidade: new RegExp(search, 'i') },
-            { tipo: new RegExp(search, 'i') },
-        ];
-    }
-
-    if (filterStatus === 'active') {
-        query.isDisabled = false;
-    } else if (filterStatus === 'inactive') {
-        query.isDisabled = true;
-    }
-
-    const sortOptions = {
-        [sortColumn]: sortDirection === 'asc' ? 1 : -1
-    };
-
     try {
-        console.log('Query:', query);
-        const jobs = await Job.find(query)
-            .sort(sortOptions)
-            .limit(Number(limit))
-            .skip((Number(page) - 1) * Number(limit))
-            .exec();
-        
-        const count = await Job.countDocuments(query);
-        console.log('Vagas encontradas:', jobs);
+        const { keyword, modality, type, status, pcd, location } = req.query;
+        const filters = { company: req.user._id };
 
-        res.json({
-            jobs,
-            totalPages: Math.ceil(count / Number(limit)),
-            currentPage: Number(page)
-        });
+        // Filtro por título (busca insensível a maiúsculas/minúsculas)
+        if (keyword) {
+            filters.title = { $regex: keyword, $options: 'i' };
+        }
+
+        // Filtro por modalidade (Presencial, Híbrido, Remoto)
+        if (modality) {
+            filters.modality = modality;
+        }
+
+        // Filtro por tipo (Efetivo, Estágio, Temporário, etc.)
+        if (type) {
+            filters.type = type;
+        }
+
+        // Filtro por status (true/false)
+        if (status) {
+            filters.status = status === 'true';  // Converte o status para booleano
+        }
+
+        // Filtro por PCD (true/false)
+        if (pcd) {
+            filters.pcd = pcd === 'true';  // Converte o valor de PCD para booleano
+        }
+
+        // Filtro por localização (busca por cidade e/ou estado usando regex)
+        if (location) {
+            filters.location = { $regex: location, $options: 'i' }; // Busca parcial na localização
+        }
+
+        // Consulta ao banco de dados com os filtros aplicados
+        const jobs = await Job.find(filters);
+
+        // Retorna um array vazio se não houver vagas encontradas
+        res.json(jobs.length ? jobs : []);
     } catch (error) {
         console.error('Erro ao buscar vagas:', error);
-        return res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde.' });
+        res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde.' });
     }
 };
-
-
 
 const addJob = async (req, res) => {
     const {
@@ -135,7 +133,7 @@ const toggleJobStatus = async (req, res) => {
             return res.status(404).json({ error: 'Vaga não encontrada.' });
         }
 
-        job.status = job.status === 'Ativo' ? 'Inativa' : 'Ativo';
+        job.status = job.status === 'Ativo' ? 'Inativo' : 'Ativo';
         await job.save();
         res.json(job);
     } catch (error) {
