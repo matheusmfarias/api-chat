@@ -36,7 +36,7 @@ const getJobs = async (req, res) => {
         }
 
         // Consulta ao banco de dados com os filtros aplicados
-        const jobs = await Job.find(filters);
+        const jobs = await Job.find(filters).populate('company', 'nome');
 
         // Retorna um array vazio se não houver vagas encontradas
         res.json(jobs.length ? jobs : []);
