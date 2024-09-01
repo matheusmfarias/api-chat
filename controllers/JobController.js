@@ -48,7 +48,7 @@ const getJobs = async (req, res) => {
 
 const addJob = async (req, res) => {
     const {
-        title, location, modality, type, status, description,
+        title, location, modality, type, status, publicationDate, description,
         responsibilities, qualifications, additionalInfo, requirements,
         offers, pcd, salary
     } = req.body;
@@ -60,6 +60,7 @@ const addJob = async (req, res) => {
             modality,
             type,
             status,
+            publicationDate,
             description,
             responsibilities,
             qualifications,
@@ -82,7 +83,7 @@ const addJob = async (req, res) => {
 const updateJob = async (req, res) => {
     const { id } = req.params;
     const {
-        title, location, modality, type, status, description,
+        title, location, modality, type, status, publicationDate, description,
         responsibilities, qualifications, additionalInfo, requirements,
         offers, pcd, salary
     } = req.body;
@@ -91,7 +92,7 @@ const updateJob = async (req, res) => {
         const job = await Job.findByIdAndUpdate(
             id,
             {
-                title, location, modality, type, status, description,
+                title, location, modality, type, status, publicationDate, description,
                 responsibilities, qualifications, additionalInfo, requirements,
                 offers, pcd, salary
             },

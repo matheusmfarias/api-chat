@@ -6,6 +6,7 @@ const JobSchema = new mongoose.Schema({
     modality: { type: String, required: true },
     type: { type: String, required: true },
     status: { type: Boolean, default: true },
+    publicationDate: { type: Date, default: Date.now },
     description: { type: String },
     responsibilities: { type: String },
     qualifications: { type: String },
