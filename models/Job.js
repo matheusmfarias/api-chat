@@ -15,7 +15,8 @@ const JobSchema = new mongoose.Schema({
     offers: { type: String },
     pcd: { type: Boolean, default: false },
     salary: { type: String },
-    company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true }
+    company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+    identifyCompany: { type: Boolean, default: true }
 });
 
 module.exports = mongoose.model('Job', JobSchema);

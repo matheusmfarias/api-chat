@@ -50,7 +50,7 @@ const addJob = async (req, res) => {
     const {
         title, location, modality, type, status, publicationDate, description,
         responsibilities, qualifications, additionalInfo, requirements,
-        offers, pcd, salary
+        offers, pcd, salary, identifyCompany
     } = req.body;
 
     try {
@@ -69,6 +69,7 @@ const addJob = async (req, res) => {
             offers,
             pcd,
             salary,
+            identifyCompany,
             company: req.user._id
         });
 
@@ -85,7 +86,7 @@ const updateJob = async (req, res) => {
     const {
         title, location, modality, type, status, publicationDate, description,
         responsibilities, qualifications, additionalInfo, requirements,
-        offers, pcd, salary
+        offers, pcd, salary, identifyCompany
     } = req.body;
 
     try {
@@ -94,7 +95,7 @@ const updateJob = async (req, res) => {
             {
                 title, location, modality, type, status, publicationDate, description,
                 responsibilities, qualifications, additionalInfo, requirements,
-                offers, pcd, salary
+                offers, pcd, salary, identifyCompany
             },
             { new: true }
         );
