@@ -25,7 +25,7 @@ const getJobs = async (req, res) => {
 
         // Realiza a busca com os filtros aplicados
         const jobs = await Job.find(filters)
-            .select('title location modality type publicationDate description salary pcd identifyCompany company')
+            .select('title location modality type description responsibilities qualifications requiriments additionalInfo salary pcd identifyCompany company')
             .populate({
                 path: 'company',
                 select: 'nome' // Seleciona apenas o nome da empresa
