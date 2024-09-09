@@ -2,32 +2,29 @@ const Job = require('../models/Job');
 
 const getJobs = async (req, res) => {
     try {
-        const { keyword, filter, state, city, modality, type, pcd, minSalary, maxSalary } = req.query;
+        const { keyword, state, city, modality, type, pcd, minSalary, maxSalary } = req.query;
         const filters = { status: true }; // Apenas vagas ativas
 
-        // Filtrar por título da vaga (cargo)
+        // Filtrar por título da vaga (cargo) e combinar com outros campos
         if (keyword) {
-            filters.title = { $regex: keyword, $options: 'i' }; // Busca insensível a maiúsculas/minúsculas
-        }
-
-        // Verifica filtros adicionais
-        if (filter) {
-            const filterRegex = { $regex: filter, $options: 'i' }; // Filtro insensível a maiúsculas e minúsculas
             filters.$or = [
-                { location: filterRegex },      // Filtrar por cidade e estado
-                { modality: filterRegex },      // Filtrar por modalidade
-                { type: filterRegex }           // Filtrar por tipo
+                { title: { $regex: keyword, $options: 'i' } }, // Busca por título (cargo)
+                { location: { $regex: keyword, $options: 'i' } }, // Busca por local (estado/cidade)
+                { modality: { $regex: keyword, $options: 'i' } }, // Busca por modalidade
+                { type: { $regex: keyword, $options: 'i' } } // Busca por tipo
             ];
         }
 
-        // Filtro por estado
-        if (state) {
-            filters.location = { $regex: state, $options: 'i' };
-        }
-
-        // Filtro por cidade
-        if (city) {
-            filters.location = { $regex: city, $options: 'i' };
+        // Filtro por estado e cidade (combinado)
+        if (state || city) {
+            filters.location = {};
+            if (state) {
+                filters.location.$regex = state;
+                filters.location.$options = 'i'; // Insensível a maiúsculas
+            }
+            if (city) {
+                filters.location = { ...filters.location, $regex: city, $options: 'i' };
+            }
         }
 
         // Filtro por modalidade
