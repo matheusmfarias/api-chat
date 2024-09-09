@@ -104,23 +104,27 @@ const updateCompany = async (req, res) => {
 
     try {
         if (!nome || !cnpj || !setor || !email) {
-            return res.status(400).json({ error: 'Todos os campos são obrigatórios!' });
+            return res.status(400).json({ error: 'Todos os campos obrigatórios devem ser preenchidos!' });
         }
-        
+
+        // Validação do CNPJ
         if (!validateCNPJ(cnpj)) {
             return res.status(400).json({ error: 'CNPJ inválido!' });
         }
 
+        // Verificar se o CNPJ já está cadastrado em outra empresa
         const existingCompanyByCNPJ = await Company.findOne({ cnpj });
         if (existingCompanyByCNPJ && existingCompanyByCNPJ._id.toString() !== id) {
             return res.status(400).json({ error: 'CNPJ já cadastrado!' });
         }
 
+        // Verificar se o e-mail já está cadastrado em outra empresa
         const existingCompanyByEmail = await Company.findOne({ email });
         if (existingCompanyByEmail && existingCompanyByEmail._id.toString() !== id) {
             return res.status(400).json({ error: 'Email já cadastrado!' });
         }
 
+        // Montar os campos que serão atualizados
         const updates = {
             nome,
             cnpj,
@@ -128,24 +132,29 @@ const updateCompany = async (req, res) => {
             email,
             isDisabled
         };
-        
-        // Recriptografa a senha se ela for alterada
-        if (senha && senha !== existingCompanyByEmail.senha) {
-            updates.senha = await bcrypt.hash(senha, 10);
+
+        // Atualizar a senha apenas se ela for fornecida
+        if (senha && senha.trim() !== "") {  // Se o campo de senha não for vazio
+            const existingCompany = await Company.findById(id);
+            if (!existingCompany) {
+                return res.status(404).json({ error: 'Empresa não encontrada!' });
+            }
+
+            // Verificar se a nova senha é diferente da senha atual
+            const isSamePassword = await bcrypt.compare(senha, existingCompany.senha);
+            if (!isSamePassword) {
+                updates.senha = await bcrypt.hash(senha, 10);  // Recriptografar nova senha
+            }
         }
 
+        // Atualizar a empresa
         const company = await Company.findByIdAndUpdate(id, updates, { new: true });
-        if (!company) {
-            return res.status(404).send('Empresa não encontrada');
-        }
         res.send(company);
     } catch (error) {
         console.error('Erro ao atualizar empresa:', error);
-        res.status(500).send('Erro ao atualizar empresa');
+        res.status(500).json({ error: 'Erro ao atualizar empresa' });
     }
 };
-
-
 
 const deleteCompany = async (req, res) => {
     try {
