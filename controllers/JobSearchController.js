@@ -55,7 +55,7 @@ const getJobs = async (req, res) => {
 
         // Realiza a busca com os filtros aplicados
         const jobs = await Job.find(filters)
-            .select('title location modality type description responsibilities qualifications requiriments additionalInfo salary pcd identifyCompany company')
+            .select('title location modality type salary pcd identifyCompany company')
             .populate({
                 path: 'company',
                 select: 'nome' // Seleciona apenas o nome da empresa
@@ -68,6 +68,26 @@ const getJobs = async (req, res) => {
     }
 };
 
+const getJobById = async (req, res) => {
+    try {
+        const job = await Job.findById(req.params.id)
+            .populate({
+                path: 'company',
+                select: 'nome' // Seleciona apenas o nome da empresa
+            });
+        
+        if (!job) {
+            return res.status(404).json({ error: 'Vaga não encontrada' });
+        }
+
+        res.json(job);
+    } catch (error) {
+        console.error('Erro ao buscar detalhes da vaga:', error);
+        res.status(500).json({ error: 'Erro ao buscar detalhes da vaga. Tente novamente mais tarde' });
+    }
+};
+
 module.exports = {
-    getJobs
+    getJobs,
+    getJobById
 };
