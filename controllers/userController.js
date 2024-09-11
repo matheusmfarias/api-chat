@@ -31,44 +31,40 @@ const updateCandidato = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).send('Usuário não encontrado');
 
-        user.nome = req.body.firstName || user.nome;
-        user.sobrenome = req.body.lastName || user.sobrenome;
+        const { cnh, cnhTypes } = req.body;
+
+        // Verifica se cnhTypes é um array, caso contrário converte-o
+        const cnhTypesArray = Array.isArray(cnhTypes) ? cnhTypes : cnhTypes.split(',');
+
+        // Verifica se o usuário selecionou "Tenho" para CNH, mas não selecionou nenhuma modalidade
+        if (cnh === 'Tenho' && (!cnhTypes || cnhTypes.length === 0)) {
+            return res.status(400).send('Você deve selecionar pelo menos uma modalidade de CNH.');
+        }
+
+        // Se o usuário selecionou "Não tenho" para CNH, limpar o campo cnhTypes
+        if (cnh === 'Não tenho') {
+            req.body.cnhTypes = []; // Limpa as modalidades de CNH no banco de dados
+        }
+
+        // Atualiza os dados adicionais do usuário
         user.additionalInfo = {
             maritalStatus: req.body.maritalStatus || user.additionalInfo.maritalStatus,
             contactPhone: req.body.contactPhone || user.additionalInfo.contactPhone,
             backupPhone: req.body.backupPhone || user.additionalInfo.backupPhone,
             rg: req.body.rg || user.additionalInfo.rg,
-            cnh: req.body.cnh || user.additionalInfo.cnh,
+            cnh: cnh || user.additionalInfo.cnh,
             cnhTypes: req.body.cnhTypes || user.additionalInfo.cnhTypes
         };
-        user.cpf = req.body.cpf || user.cpf;
-        user.nascimento = req.body.birthDate || user.nascimento;
-        user.email = req.body.email || user.email;
-        user.address = {
-            street: req.body.street || user.address.street,
-            number: req.body.number || user.address.number,
-            district: req.body.neighborhood || user.address.district,
-            city: req.body.city || user.address.city
-        };
-
-        if (req.file) {
-            if (user.profilePicture) {
-                const oldPath = path.join(__dirname, '..', user.profilePicture);
-                fs.unlink(oldPath, err => {
-                    if (err) console.error('Erro ao remover a foto de perfil antiga:', err);
-                });
-            }
-            user.profilePicture = `/uploads/${req.file.filename}`;
-        }
 
         await user.save();
 
-        res.send(user);
+        res.status(200).send('Dados atualizados com sucesso');
     } catch (error) {
         console.error('Erro ao atualizar os dados do usuário:', error);
         res.status(500).send('Erro ao atualizar os dados do usuário');
     }
 };
+
 
 const updateAddress = async (req, res) => {
     try {
@@ -89,6 +85,19 @@ const updateAdditionalInfo = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).send('Usuário não encontrado');
 
+        const { cnh, cnhTypes } = req.body;
+
+        // Se o usuário selecionou "Tenho" para CNH, mas não selecionou nenhuma modalidade, retornar erro
+        if (cnh === 'Tenho' && (!cnhTypes || cnhTypes.length === 0)) {
+            return res.status(400).send('Você deve selecionar pelo menos uma modalidade de CNH.');
+        }
+
+        // Se o usuário selecionou "Não tenho" para CNH, limpar o campo cnhTypes
+        if (cnh === 'Não tenho') {
+            req.body.cnhTypes = []; // Limpa as modalidades de CNH no banco de dados
+        }
+
+        // Atualiza os dados adicionais do usuário
         user.additionalInfo = {
             ...user.additionalInfo,
             ...req.body
