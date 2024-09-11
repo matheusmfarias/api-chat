@@ -43,8 +43,8 @@ const UserSchema = new mongoose.Schema({
         contactPhone: { type: String },
         backupPhone: { type: String },
         rg: { type: String, unique: true },
-        cnh: { type: String },
-        cnhTypes: [{ type: String }]
+        cnh: { type: Boolean }, // Alterado para Boolean
+        cnhTypes: [{ type: String }] // Mantido como array de strings
     },
     experiences: { type: [ExperienceSchema], default: [] },
     formacao: { type: [FormacaoSchema], default: [] },

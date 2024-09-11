@@ -33,17 +33,17 @@ const updateCandidato = async (req, res) => {
 
         const { cnh, cnhTypes } = req.body;
 
-        // Verifica se cnhTypes é um array, caso contrário converte-o
+        // Certifica que cnhTypes é um array
         const cnhTypesArray = Array.isArray(cnhTypes) ? cnhTypes : cnhTypes.split(',');
 
-        // Verifica se o usuário selecionou "Tenho" para CNH, mas não selecionou nenhuma modalidade
-        if (cnh === 'Tenho' && (!cnhTypes || cnhTypes.length === 0)) {
+        // Verifica se cnh é true e não há tipos de CNH selecionados
+        if (cnh === true && (!cnhTypesArray || cnhTypesArray.length === 0)) {
             return res.status(400).send('Você deve selecionar pelo menos uma modalidade de CNH.');
         }
 
-        // Se o usuário selecionou "Não tenho" para CNH, limpar o campo cnhTypes
-        if (cnh === 'Não tenho') {
-            req.body.cnhTypes = []; // Limpa as modalidades de CNH no banco de dados
+        // Se o usuário não tem CNH, limpar o campo cnhTypes
+        if (cnh === false) {
+            req.body.cnhTypes = [];
         }
 
         // Atualiza os dados adicionais do usuário
@@ -53,7 +53,7 @@ const updateCandidato = async (req, res) => {
             backupPhone: req.body.backupPhone || user.additionalInfo.backupPhone,
             rg: req.body.rg || user.additionalInfo.rg,
             cnh: cnh || user.additionalInfo.cnh,
-            cnhTypes: req.body.cnhTypes || user.additionalInfo.cnhTypes
+            cnhTypes: cnhTypesArray // Aqui estamos garantindo que o array de tipos de CNH é salvo corretamente
         };
 
         await user.save();
@@ -64,7 +64,6 @@ const updateCandidato = async (req, res) => {
         res.status(500).send('Erro ao atualizar os dados do usuário');
     }
 };
-
 
 const updateAddress = async (req, res) => {
     try {
@@ -87,14 +86,14 @@ const updateAdditionalInfo = async (req, res) => {
 
         const { cnh, cnhTypes } = req.body;
 
-        // Se o usuário selecionou "Tenho" para CNH, mas não selecionou nenhuma modalidade, retornar erro
-        if (cnh === 'Tenho' && (!cnhTypes || cnhTypes.length === 0)) {
+        // Se cnh é true e não há tipos de CNH selecionados
+        if (cnh === true && (!cnhTypes || cnhTypes.length === 0)) {
             return res.status(400).send('Você deve selecionar pelo menos uma modalidade de CNH.');
         }
 
-        // Se o usuário selecionou "Não tenho" para CNH, limpar o campo cnhTypes
-        if (cnh === 'Não tenho') {
-            req.body.cnhTypes = []; // Limpa as modalidades de CNH no banco de dados
+        // Se o usuário não tem CNH, limpar o campo cnhTypes
+        if (cnh === false) {
+            req.body.cnhTypes = [];
         }
 
         // Atualiza os dados adicionais do usuário
