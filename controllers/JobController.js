@@ -189,7 +189,7 @@ const getJobsWithApplications = async (req, res) => {
       // Obter as candidaturas para cada vaga
       const jobsWithApplications = await Promise.all(
         jobs.map(async (job) => {
-          const applications = await JobApplication.find({ job: job._id }).populate('user', 'nome sobrenome profilePicture');
+          const applications = await JobApplication.find({ job: job._id }).populate('user', 'nome sobrenome email profilePicture experiences formacao');
           return { job, applications };
         })
       );
