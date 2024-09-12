@@ -28,7 +28,7 @@ const updateProfilePicture = async (req, res) => {
 
 const updateCandidato = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        let user = await User.findById(req.user._id);
         if (!user) return res.status(404).send('Usuário não encontrado');
 
         const { cnh, cnhTypes } = req.body;
@@ -46,6 +46,11 @@ const updateCandidato = async (req, res) => {
             req.body.cnhTypes = [];
         }
 
+        // Atualiza os campos do usuário
+        user.nome = req.body.nome || user.nome;
+        user.sobrenome = req.body.sobrenome || user.sobrenome;
+        user.nascimento = req.body.nascimento || user.nascimento;
+
         // Atualiza os dados adicionais do usuário
         user.additionalInfo = {
             maritalStatus: req.body.maritalStatus || user.additionalInfo.maritalStatus,
@@ -54,6 +59,13 @@ const updateCandidato = async (req, res) => {
             rg: req.body.rg || user.additionalInfo.rg,
             cnh: cnh || user.additionalInfo.cnh,
             cnhTypes: cnhTypesArray // Aqui estamos garantindo que o array de tipos de CNH é salvo corretamente
+        };
+
+        user.address = {
+            street: req.body.street || user.address.street,
+            number: req.body.number || user.address.number,
+            district: req.body.district || user.address.district,
+            city: req.body.city || user.address.city
         };
 
         await user.save();
