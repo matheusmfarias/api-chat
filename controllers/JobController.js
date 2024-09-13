@@ -6,40 +6,38 @@ const getJobs = async (req, res) => {
         const { keyword, modality, type, status, pcd, location } = req.query;
         const filters = { company: req.user._id };
 
-        // Filtro por título (busca insensível a maiúsculas/minúsculas)
+        // Filtro por título
         if (keyword) {
             filters.title = { $regex: keyword, $options: 'i' };
         }
 
-        // Filtro por modalidade (Presencial, Híbrido, Remoto)
+        // Filtro por modalidade (pode ser múltiplo)
         if (modality) {
-            filters.modality = modality;
+            filters.modality = Array.isArray(modality) ? { $in: modality } : modality;
         }
 
-        // Filtro por tipo (Efetivo, Estágio, Temporário, etc.)
+        // Filtro por tipo (pode ser múltiplo)
         if (type) {
-            filters.type = type;
+            filters.type = Array.isArray(type) ? { $in: type } : type;
         }
 
-        // Filtro por status (true/false)
+        // Filtro por status
         if (status) {
-            filters.status = status === 'true';  // Converte o status para booleano
+            filters.status = status === 'true';
         }
 
-        // Filtro por PCD (true/false)
+        // Filtro por PCD
         if (pcd) {
-            filters.pcd = pcd === 'true';  // Converte o valor de PCD para booleano
+            filters.pcd = pcd === 'true';
         }
 
-        // Filtro por localização (busca por cidade e/ou estado usando regex)
+        // Filtro por localização
         if (location) {
-            filters.location = { $regex: location, $options: 'i' }; // Busca parcial na localização
+            filters.location = { $regex: location, $options: 'i' };
         }
 
-        // Consulta ao banco de dados com os filtros aplicados
         const jobs = await Job.find(filters).populate('company', 'nome');
 
-        // Retorna um array vazio se não houver vagas encontradas
         res.json(jobs.length ? jobs : []);
     } catch (error) {
         console.error('Erro ao buscar vagas:', error);
