@@ -1,5 +1,6 @@
 const Job = require('../models/Job');
 const JobApplication = require('../models/JobApplication');
+const mongoose = require('mongoose');
 
 const getJobs = async (req, res) => {
     try {
@@ -177,27 +178,39 @@ const submitCurriculum = async (req, res) => {
 };
 
 // Função para obter as vagas com as candidaturas
-const getJobsWithApplications = async (req, res) => {
+const getJobApplications = async (req, res) => {
     try {
-      const companyId = req.user._id;
-  
-      // Obter as vagas da empresa
-      const jobs = await Job.find({ company: companyId });
-  
-      // Obter as candidaturas para cada vaga
-      const jobsWithApplications = await Promise.all(
-        jobs.map(async (job) => {
-          const applications = await JobApplication.find({ job: job._id }).populate('user', 'nome sobrenome email profilePicture experiences formacao');
-          return { job, applications };
-        })
-      );
-  
-      res.json(jobsWithApplications);
+        const { jobId } = req.params; // Obter o jobId da URL
+        const { page = 1, limit = 10, searchTerm } = req.query;
+
+        // Convertendo o jobId para ObjectId usando 'new'
+        const filters = { job: new mongoose.Types.ObjectId(jobId) };
+
+        console.log('Job ID no backend:', jobId);
+        console.log('Filtros aplicados:', filters);
+
+        if (!mongoose.Types.ObjectId.isValid(jobId)) {
+            return res.status(400).json({ error: 'ID da vaga inválido' });
+        }
+
+        // Buscar candidaturas com base nos filtros
+        const applications = await JobApplication.find(filters)
+            .populate('user', 'nome sobrenome email profilePicture experiences formacao')
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit));
+
+        const totalApplications = await JobApplication.countDocuments(filters);
+
+        return res.json({
+            candidates: applications,
+            totalPages: Math.ceil(totalApplications / limit),
+            currentPage: parseInt(page)
+        });
     } catch (error) {
-      console.error('Erro ao obter vagas com candidaturas:', error);
-      res.status(500).json({ error: 'Erro ao obter vagas com candidaturas.' });
+        console.error('Erro ao buscar candidatos para a vaga:', error);
+        res.status(500).json({ error: 'Erro ao buscar candidatos para a vaga.' });
     }
-  };
+};
 
 module.exports = {
     getJobs,
@@ -206,5 +219,5 @@ module.exports = {
     deleteJob,
     toggleJobStatus,
     submitCurriculum,
-    getJobsWithApplications
+    getJobApplications
 };

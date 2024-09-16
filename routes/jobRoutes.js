@@ -12,6 +12,6 @@ router.put('/toggle-status/:id', auth, JobController.toggleJobStatus);
 
 // Nova rota para submeter currículo
 router.post('/:id/submit-curriculum', auth, JobController.submitCurriculum);
-router.get('/applications', auth, JobController.getJobsWithApplications);
+router.get('/applications/:jobId', auth, JobController.getJobApplications);
 
 module.exports = router;
