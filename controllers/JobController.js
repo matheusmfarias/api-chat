@@ -180,26 +180,38 @@ const submitCurriculum = async (req, res) => {
 // Função para obter as vagas com as candidaturas
 const getJobApplications = async (req, res) => {
     try {
-        const { jobId } = req.params; // Obter o jobId da URL
+        const { jobId } = req.params;
         const { page = 1, limit = 10, searchTerm } = req.query;
-
-        // Convertendo o jobId para ObjectId usando 'new'
-        const filters = { job: new mongoose.Types.ObjectId(jobId) };
-
-        console.log('Job ID no backend:', jobId);
-        console.log('Filtros aplicados:', filters);
 
         if (!mongoose.Types.ObjectId.isValid(jobId)) {
             return res.status(400).json({ error: 'ID da vaga inválido' });
         }
 
-        // Buscar candidaturas com base nos filtros
-        const applications = await JobApplication.find(filters)
-            .populate('user', 'nome sobrenome email profilePicture experiences formacao')
+        // Filtros iniciais para a vaga específica
+        const filters = { job: new mongoose.Types.ObjectId(jobId) };
+
+        // Realiza a busca inicial para obter candidaturas
+        let applications = await JobApplication.find(filters)
+            .populate('user', 'nome sobrenome email profilePicture experiences formacao') // Popula os campos do usuário
             .skip((page - 1) * limit)
             .limit(parseInt(limit));
 
         const totalApplications = await JobApplication.countDocuments(filters);
+
+        // Agora, se houver um termo de busca, vamos filtrar os resultados já populados
+        if (searchTerm && searchTerm.trim() !== "") {
+            const regex = new RegExp(searchTerm, 'i'); // 'i' para case-insensitive
+
+            applications = applications.filter((application) => {
+                const { user } = application;
+                const matchesName = regex.test(user.nome) || regex.test(user.sobrenome);
+                const matchesExperience = user.experiences?.some(exp => regex.test(exp.empresa) || regex.test(exp.funcao));
+                const matchesEducation = user.formacao?.some(edu => regex.test(edu.instituicao) || regex.test(edu.escolaridade) || regex.test(edu.curso));
+
+                // Retorna true se alguma das condições for atendida
+                return matchesName || matchesExperience || matchesEducation;
+            });
+        }
 
         return res.json({
             candidates: applications,

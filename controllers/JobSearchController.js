@@ -2,32 +2,55 @@ const Job = require('../models/Job');
 
 const getJobs = async (req, res) => {
     try {
-        const { keyword, modality, type, pcd, location } = req.query;
+        const { keyword, state, city, modality, type, pcd, minSalary, maxSalary } = req.query;
         const filters = { status: true }; // Apenas vagas ativas
 
-        // Filtro por título
+        // Filtrar por título da vaga (cargo) e combinar com outros campos
         if (keyword) {
-            filters.title = { $regex: keyword, $options: 'i' };
+            filters.$or = [
+                { title: { $regex: keyword, $options: 'i' } }, // Busca por título (cargo)
+                { location: { $regex: keyword, $options: 'i' } }, // Busca por local (estado/cidade)
+                { modality: { $regex: keyword, $options: 'i' } }, // Busca por modalidade
+                { type: { $regex: keyword, $options: 'i' } } // Busca por tipo
+            ];
         }
 
-        // Filtro por modalidade (pode ser múltiplo)
+        // Filtro por estado e cidade (combinado)
+        if (state || city) {
+            filters.location = {};
+            if (state) {
+                filters.location.$regex = state;
+                filters.location.$options = 'i'; // Insensível a maiúsculas
+            }
+            if (city) {
+                filters.location = { ...filters.location, $regex: city, $options: 'i' };
+            }
+        }
+
+        // Filtro por modalidade
         if (modality) {
-            filters.modality = Array.isArray(modality) ? { $in: modality } : modality;
+            filters.modality = modality;
         }
 
-        // Filtro por tipo (pode ser múltiplo)
+        // Filtro por tipo de vaga
         if (type) {
-            filters.type = Array.isArray(type) ? { $in: type } : type;
+            filters.type = type;
         }
 
-        // Filtro por PCD
-        if (pcd) {
+        // Filtro por PcD
+        if (pcd !== undefined) {
             filters.pcd = pcd === 'true';
         }
 
-        // Filtro por localização
-        if (location) {
-            filters.location = { $regex: location, $options: 'i' };
+        // Filtro por faixa salarial
+        if (minSalary || maxSalary) {
+            filters.salary = {};
+            if (minSalary) {
+                filters.salary.$gte = Number(minSalary);
+            }
+            if (maxSalary) {
+                filters.salary.$lte = Number(maxSalary);
+            }
         }
 
         // Realiza a busca com os filtros aplicados
@@ -52,7 +75,7 @@ const getJobById = async (req, res) => {
                 path: 'company',
                 select: 'nome' // Seleciona apenas o nome da empresa
             });
-
+        
         if (!job) {
             return res.status(404).json({ error: 'Vaga não encontrada' });
         }
