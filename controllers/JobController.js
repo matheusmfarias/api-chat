@@ -90,19 +90,42 @@ const updateJob = async (req, res) => {
     } = req.body;
 
     try {
-        const job = await Job.findByIdAndUpdate(
-            id,
-            {
-                title, location, modality, type, status, publicationDate, description,
-                responsibilities, qualifications, additionalInfo, requirements,
-                offers, pcd, salary, identifyCompany
-            },
-            { new: true }
-        );
-
+        // Busca a vaga existente para verificar o status atual
+        const job = await Job.findById(id);
         if (!job) {
             return res.status(404).json({ error: 'Vaga não encontrada.' });
         }
+
+        // Atualiza os campos da vaga
+        job.title = title;
+        job.location = location;
+        job.modality = modality;
+        job.type = type;
+        job.publicationDate = publicationDate;
+        job.description = description;
+        job.responsibilities = responsibilities;
+        job.qualifications = qualifications;
+        job.additionalInfo = additionalInfo;
+        job.requirements = requirements;
+        job.offers = offers;
+        job.pcd = pcd;
+        job.salary = salary;
+        job.identifyCompany = identifyCompany;
+
+        // Verifica se o status está sendo alterado
+        if (status !== undefined && status !== job.status) {
+            job.status = status;
+
+            // Se o status foi alterado para false (vaga inativa), define a data de encerramento
+            if (!status) {
+                job.closingDate = new Date();  // Define a data de encerramento
+            } else {
+                job.closingDate = null;  // Remove a data de encerramento se a vaga for ativada
+            }
+        }
+
+        // Salva a vaga atualizada
+        await job.save();
 
         res.json(job);
     } catch (error) {
@@ -135,7 +158,16 @@ const toggleJobStatus = async (req, res) => {
             return res.status(404).json({ error: 'Vaga não encontrada.' });
         }
 
-        job.status = job.status === 'Ativo' ? 'Inativo' : 'Ativo';
+        // Alterna o status da vaga
+        job.status = !job.status;
+
+        // Se a vaga for desativada, define a data de encerramento
+        if (!job.status) {
+            job.closingDate = new Date();  // Define a data de encerramento como a data atual
+        } else {
+            job.closingDate = null;  // Remove a data de encerramento se a vaga for reativada
+        }
+
         await job.save();
         res.json(job);
     } catch (error) {
@@ -190,12 +222,13 @@ const getJobApplications = async (req, res) => {
         // Filtros iniciais para a vaga específica
         const filters = { job: new mongoose.Types.ObjectId(jobId) };
 
-        // Realiza a busca inicial para obter candidaturas
+        // Realiza a busca inicial para obter candidaturas sem aplicar filtros de busca
         let applications = await JobApplication.find(filters)
-            .populate('user', 'nome sobrenome email profilePicture experiences formacao') // Popula os campos do usuário
+            .populate('user', 'nome sobrenome email profilePicture experiences formacao')
             .skip((page - 1) * limit)
             .limit(parseInt(limit));
 
+        // Contagem do total de candidaturas (antes da aplicação do filtro de busca)
         const totalApplications = await JobApplication.countDocuments(filters);
 
         // Agora, se houver um termo de busca, vamos filtrar os resultados já populados
@@ -213,10 +246,14 @@ const getJobApplications = async (req, res) => {
             });
         }
 
+        // Total de candidatos após a aplicação do filtro
+        const filteredApplicationsCount = applications.length;
+
         return res.json({
             candidates: applications,
-            totalPages: Math.ceil(totalApplications / limit),
-            currentPage: parseInt(page)
+            totalPages: Math.ceil(totalApplications / limit),  // Número total de páginas considerando todas as candidaturas
+            currentPage: parseInt(page),
+            filteredCount: filteredApplicationsCount, // Retorna a contagem após o filtro
         });
     } catch (error) {
         console.error('Erro ao buscar candidatos para a vaga:', error);

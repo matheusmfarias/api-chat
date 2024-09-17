@@ -1,4 +1,6 @@
 const Company = require('../models/Company');
+const Job = require('../models/Job');
+const JobApplication = require('../models/JobApplication');
 const bcrypt = require('bcryptjs');
 const { validateCNPJ } = require('../utils/validators');
 
@@ -184,11 +186,59 @@ const toggleCompanyStatus = async (req, res) => {
     }
 };
 
+const getJobsByCompany = async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+    const { companyId } = req.params;
+
+    try {
+        const jobs = await Job.find({ company: companyId })
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit))
+            .exec();
+
+        const count = await Job.countDocuments({ company: companyId });
+
+        res.json({
+            jobs,
+            totalPages: Math.ceil(count / Number(limit)),
+            currentPage: Number(page)
+        });
+    } catch (error) {
+        res.status(500).send('Erro ao buscar vagas');
+    }
+};
+
+const getCandidatesByJob = async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+    const { jobId } = req.params;
+
+    try {
+        const applications = await JobApplication.find({ job: jobId })
+            .populate('user', 'nome email additionalInfo')
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit))
+            .exec();
+
+        const count = await JobApplication.countDocuments({ job: jobId });
+
+        res.json({
+            candidates: applications.map(application => application.user),
+            totalPages: Math.ceil(count / Number(limit)),
+            currentPage: Number(page)
+        });
+    } catch (error) {
+        res.status(500).send('Erro ao buscar candidatos');
+    }
+};
+
+
 module.exports = {
     getCurrentCompany,
     addCompany,
     getCompanies,
     updateCompany,
     deleteCompany,
-    toggleCompanyStatus
+    toggleCompanyStatus,
+    getJobsByCompany,
+    getCandidatesByJob
 };

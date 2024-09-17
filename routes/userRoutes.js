@@ -52,4 +52,6 @@ router.delete('/objetivos', auth, UserController.removeObjetivo);
 router.get('/candidatos', auth, UserController.getCandidatos);
 router.get('/candidato/:candidatoId', auth, UserController.getCandidatoById);
 
+router.get('/applications', auth, UserController.getUserApplications);
+
 module.exports = router;
