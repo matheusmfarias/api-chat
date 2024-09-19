@@ -1,5 +1,6 @@
 const express = require('express');
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 const JobController = require('../controllers/JobController');
 
 const router = express.Router();
@@ -13,5 +14,11 @@ router.put('/toggle-status/:id', auth, JobController.toggleJobStatus);
 // Nova rota para submeter currículo
 router.post('/:id/submit-curriculum', auth, JobController.submitCurriculum);
 router.get('/applications/:jobId', auth, JobController.getJobApplications);
+
+// Rotas para vagas
+router.get('/:companyId/jobs', auth, admin, JobController.getJobsByCompany);
+
+// Rotas para candidatos
+router.get('/:jobId/candidates', auth, admin, JobController.getCandidatesByJob);
 
 module.exports = router;

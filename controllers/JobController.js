@@ -261,6 +261,35 @@ const getJobApplications = async (req, res) => {
     }
 };
 
+const getJobsByCompany = async (req, res) => {
+    try {
+        const { companyId } = req.params;
+        const jobs = await Job.find({ company: companyId });
+        if (!jobs) {
+            return res.status(404).send('Vagas não encontradas');
+        }
+        res.json(jobs);
+    } catch (error) {
+        console.error('Erro ao buscar vagas:', error);
+        res.status(500).send('Erro ao buscar vagas da empresa');
+    }
+};
+
+const getCandidatesByJob = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        const candidates = await JobApplication.find({ job: jobId }).populate('user', 'nome sobrenome email');
+        if (!candidates) {
+            return res.status(404).send('Candidatos não encontrados');
+        }
+        console.log(candidates);
+        res.json(candidates);
+    } catch (error) {
+        console.error('Erro ao buscar candidatos:', error);
+        res.status(500).send('Erro ao buscar candidatos da vaga');
+    }
+};
+
 module.exports = {
     getJobs,
     addJob,
@@ -268,5 +297,7 @@ module.exports = {
     deleteJob,
     toggleJobStatus,
     submitCurriculum,
-    getJobApplications
+    getJobApplications,
+    getJobsByCompany,
+    getCandidatesByJob
 };
