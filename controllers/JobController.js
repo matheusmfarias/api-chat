@@ -264,31 +264,69 @@ const getJobApplications = async (req, res) => {
 const getJobsByCompany = async (req, res) => {
     try {
         const { companyId } = req.params;
-        const jobs = await Job.find({ company: companyId });
+        const page = parseInt(req.query.page) || 1; // Página atual (default 1)
+        const limit = parseInt(req.query.limit) || 10; // Limite de vagas por página (default 10)
+        const skip = (page - 1) * limit; // Número de vagas a pular
+
+        // Busca as vagas da empresa com paginação
+        const jobs = await Job.find({ company: companyId })
+            .skip(skip)
+            .limit(limit);
+
+        // Contagem total de vagas para calcular o número de páginas
+        const totalJobs = await Job.countDocuments({ company: companyId });
+
         if (!jobs) {
             return res.status(404).send('Vagas não encontradas');
         }
-        res.json(jobs);
+
+        // Retorna as vagas com as informações de paginação
+        res.json({
+            jobs,
+            currentPage: page,
+            totalPages: Math.ceil(totalJobs / limit),
+            totalJobs: totalJobs
+        });
     } catch (error) {
         console.error('Erro ao buscar vagas:', error);
         res.status(500).send('Erro ao buscar vagas da empresa');
     }
 };
 
+
 const getCandidatesByJob = async (req, res) => {
     try {
         const { jobId } = req.params;
-        const candidates = await JobApplication.find({ job: jobId }).populate('user', 'nome sobrenome email');
+        const page = parseInt(req.query.page) || 1; // Página atual (default 1)
+        const limit = parseInt(req.query.limit) || 10; // Limite de candidatos por página (default 10)
+        const skip = (page - 1) * limit; // Número de candidatos a pular
+
+        // Busca os candidatos da vaga com paginação
+        const candidates = await JobApplication.find({ job: jobId })
+            .populate('user', 'nome sobrenome email')
+            .skip(skip)
+            .limit(limit);
+
+        // Contagem total de candidatos para calcular o número de páginas
+        const totalCandidates = await JobApplication.countDocuments({ job: jobId });
+
         if (!candidates) {
             return res.status(404).send('Candidatos não encontrados');
         }
-        console.log(candidates);
-        res.json(candidates);
+
+        // Retorna os candidatos com as informações de paginação
+        res.json({
+            candidates,
+            currentPage: page,
+            totalPages: Math.ceil(totalCandidates / limit),
+            totalCandidates: totalCandidates
+        });
     } catch (error) {
         console.error('Erro ao buscar candidatos:', error);
         res.status(500).send('Erro ao buscar candidatos da vaga');
     }
 };
+
 
 module.exports = {
     getJobs,

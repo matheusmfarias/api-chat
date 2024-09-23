@@ -18,7 +18,6 @@ const getCurrentCompany = async (req, res) => {
 
 const addCompany = async (req, res) => {
     const { nome, cnpj, setor, email, senha, isDisabled } = req.body;
-    console.log("Dados recebidos:", req.body);
     try {
         if (!nome || !cnpj || !setor || !email || !senha) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios!' });
