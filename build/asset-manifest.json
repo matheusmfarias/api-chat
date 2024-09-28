@@ -1,17 +1,17 @@
 {
   "files": {
-    "main.css": "/static/css/main.1043aeda.css",
-    "main.js": "/static/js/main.15b74bde.js",
+    "main.css": "/static/css/main.fcdfab63.css",
+    "main.js": "/static/js/main.21f4c26f.js",
     "static/media/fundo.png": "/static/media/fundo.e3068f60d3720fe8f365.png",
     "static/media/logo-comag.png": "/static/media/logo-comag.cf4602e3c04436df7739.png",
     "static/media/logo-afinato.png": "/static/media/logo-afinato.75e0f19383cf143839e5.png",
     "static/media/logo-lider.png": "/static/media/logo-lider.b8f4ae482e4c14f954a4.png",
     "index.html": "/index.html",
-    "main.1043aeda.css.map": "/static/css/main.1043aeda.css.map",
-    "main.15b74bde.js.map": "/static/js/main.15b74bde.js.map"
+    "main.fcdfab63.css.map": "/static/css/main.fcdfab63.css.map",
+    "main.21f4c26f.js.map": "/static/js/main.21f4c26f.js.map"
   },
   "entrypoints": [
-    "static/css/main.1043aeda.css",
-    "static/js/main.15b74bde.js"
+    "static/css/main.fcdfab63.css",
+    "static/js/main.21f4c26f.js"
   ]
 }
