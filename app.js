@@ -5,19 +5,24 @@ const companyRoutes = require('./routes/companyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const jobSearchRoutes = require('./routes/jobSearchRoutes');
+const auth = require('./middleware/auth');
 const cors = require('cors');
-const app = express();
-
 const path = require('path');
+
+const app = express();
 
 app.use(cors());
 app.use(express.json({ extended: false }));
+
+// Servir a pasta de uploads de forma pública antes das outras rotas
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/company', companyRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/jobsSearch', jobSearchRoutes);
+app.use('/api/company', auth, companyRoutes);
+app.use('/api/admin', auth, adminRoutes);
+app.use('/api/jobs', auth, jobRoutes);
+app.use('/api/jobsSearch', auth, jobSearchRoutes);
 
 // Serve os arquivos estáticos do build do React
 app.use(express.static(path.join(__dirname, 'build')));

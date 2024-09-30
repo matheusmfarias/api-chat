@@ -10,17 +10,22 @@ const updateProfilePicture = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).send('Usuário não encontrado');
 
+        // Verifique se o usuário já tem uma imagem de perfil
         if (user.profilePicture) {
-            const oldPath = path.join(__dirname, '..', user.profilePicture);
-            fs.unlink(oldPath, err => {
-                if (err) console.error('Erro ao remover a foto de perfil antiga:', err);
-            });
+            const oldPath = path.join(__dirname, '..', 'uploads', path.basename(user.profilePicture));
+            // Verifica se o arquivo existe antes de tentar remover
+            if (fs.existsSync(oldPath)) {
+                fs.unlink(oldPath, err => {
+                    if (err) console.error('Erro ao remover a foto de perfil antiga:', err);
+                });
+            }
         }
 
+        // Atualiza o nome da nova imagem de perfil
         user.profilePicture = `/uploads/${req.file.filename}`;
         await user.save();
 
-        res.send(user);
+        res.status(200).send({ profilePicture: user.profilePicture });
     } catch (error) {
         console.error('Erro ao atualizar a foto de perfil:', error);
         res.status(500).send('Erro ao atualizar a foto de perfil');
@@ -34,17 +39,19 @@ const updateCandidato = async (req, res) => {
 
         const { cnh, cnhTypes } = req.body;
 
-        // Certifica que cnhTypes é um array
-        const cnhTypesArray = Array.isArray(cnhTypes) ? cnhTypes : cnhTypes.split(',');
+        // Certifica que cnhTypes é um array (se não for, converte)
+        const cnhTypesArray = Array.isArray(cnhTypes) ? cnhTypes : (cnhTypes ? cnhTypes.split(',') : []);
 
-        // Verifica se cnh é true e não há tipos de CNH selecionados
-        if (cnh === true && (!cnhTypesArray || cnhTypesArray.length === 0)) {
+        // Verifica se CNH é true e não há tipos de CNH selecionados
+        if (cnh === 'true' && (!cnhTypesArray || cnhTypesArray.length === 0)) {
             return res.status(400).send('Você deve selecionar pelo menos uma modalidade de CNH.');
         }
 
-        // Se o usuário não tem CNH, limpar o campo cnhTypes
-        if (cnh === false) {
-            req.body.cnhTypes = [];
+        // Se o usuário não tem CNH, limpa o campo cnhTypes
+        if (cnh === 'false') {
+            user.additionalInfo.cnhTypes = [];
+        } else {
+            user.additionalInfo.cnhTypes = cnhTypesArray;
         }
 
         // Atualiza os campos do usuário
@@ -58,10 +65,11 @@ const updateCandidato = async (req, res) => {
             contactPhone: req.body.contactPhone || user.additionalInfo.contactPhone,
             backupPhone: req.body.backupPhone || user.additionalInfo.backupPhone,
             rg: req.body.rg || user.additionalInfo.rg,
-            cnh: cnh || user.additionalInfo.cnh,
-            cnhTypes: cnhTypesArray // Aqui estamos garantindo que o array de tipos de CNH é salvo corretamente
+            cnh: cnh === 'true' || cnh === true, // Verifica se cnh é 'true' ou true e salva como booleano
+            cnhTypes: cnhTypesArray
         };
 
+        // Atualiza o endereço do usuário
         user.address = {
             street: req.body.street || user.address.street,
             number: req.body.number || user.address.number,
@@ -69,6 +77,21 @@ const updateCandidato = async (req, res) => {
             city: req.body.city || user.address.city
         };
 
+        // Atualiza a foto de perfil se uma nova imagem foi enviada
+        if (req.file) {
+            // Remove a foto de perfil antiga se existir
+            if (user.profilePicture) {
+                const oldPath = path.join(__dirname, '..', user.profilePicture);
+                fs.unlink(oldPath, (err) => {
+                    if (err) console.error('Erro ao remover a foto de perfil antiga:', err);
+                });
+            }
+
+            // Define o novo caminho da foto de perfil
+            user.profilePicture = `/uploads/${req.file.filename}`;
+        }
+
+        // Salva o usuário com as novas informações
         await user.save();
 
         res.status(200).send('Dados atualizados com sucesso');

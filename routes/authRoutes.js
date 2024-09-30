@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
         await user.save();
 
         sendConfirmationEmail(email, verificationToken);
-
+        
         res.status(201).send('Usuário cadastrado com sucesso! Verifique seu e-mail para confirmar o cadastro.');
     } catch (error) {
         res.status(400).send(error.message);
@@ -139,7 +139,7 @@ router.post('/login', async (req, res) => {
         res.status(200).json({ token, firstLogin, role });
 
     } catch (error) {
-        console.error('Erro ao fazer login:', error);
+        console.log('Erro ao fazer login:', error);
         res.status(500).send('Erro ao fazer login. Por favor, tente novamente mais tarde.');
     }
 });
@@ -162,8 +162,8 @@ router.post('/login-empresa', async (req, res) => {
         }
 
         // Verifica se a empresa está desabilitada
-        if (empresa.isDisabled) {
-            return res.status(403).send('Esta empresa está desabilitada. Entre em contato com o suporte.');
+        if (!empresa.status) {
+            return res.status(403).send('Erro ao acessar a conta. Entre em contato com a ACI.');
         }
 
         // Verifica se a senha está correta

@@ -7,12 +7,14 @@ const auth = async (req, res, next) => {
     try {
         const authHeader = req.header('Authorization');
         if (!authHeader) {
-            throw new Error('Authorization header missing');
+            return res.status(401).send('Authorization header missing');
         }
+
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         let user;
 
+        // Verifica o tipo de usuário com base no papel (role)
         if (decoded.role === 'admin') {
             user = await Admin.findOne({ _id: decoded.userId });
         } else if (decoded.role === 'empresa') {
@@ -22,16 +24,22 @@ const auth = async (req, res, next) => {
         }
 
         if (!user) {
-            throw new Error('User not found');
+            return res.status(404).send('User not found');
         }
 
+        // Renova o token antes de passar para a próxima etapa
+        const newToken = jwt.sign({ userId: user._id, role: decoded.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.setHeader('Authorization', `Bearer ${newToken}`);
+
+        // Adiciona os dados do usuário, token e role no req
         req.user = user;
-        req.token = token;
+        req.token = newToken;
         req.role = decoded.role;
-        next();
+
+        next();  // Passa para o próximo middleware ou rota
     } catch (error) {
         console.error('Auth error:', error.message);
-        res.status(401).send("Por favor, autentique-se");
+        return res.status(401).send("Por favor, autentique-se");
     }
 };
 

@@ -17,7 +17,7 @@ const getCurrentCompany = async (req, res) => {
 };
 
 const addCompany = async (req, res) => {
-    const { nome, cnpj, setor, email, senha, isDisabled } = req.body;
+    const { nome, cnpj, setor, email, senha, status } = req.body;
     try {
         if (!nome || !cnpj || !setor || !email || !senha) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios!' });
@@ -45,7 +45,7 @@ const addCompany = async (req, res) => {
             setor,
             email,
             senha: hashedPassword,
-            isDisabled: isDisabled || false
+            status: status || true
         });
 
         await newCompany.save();
@@ -71,9 +71,9 @@ const getCompanies = async (req, res) => {
     }
 
     if (filterStatus === 'active') {
-        query.isDisabled = false;
+        query.status = true;
     } else if (filterStatus === 'inactive') {
-        query.isDisabled = true;
+        query.status = false;
     }
 
     const sortOptions = {
@@ -101,7 +101,7 @@ const getCompanies = async (req, res) => {
 
 const updateCompany = async (req, res) => {
     const { id } = req.params;
-    const { nome, cnpj, setor, email, senha, isDisabled } = req.body;
+    const { nome, cnpj, setor, email, senha, status } = req.body;
 
     try {
         if (!nome || !cnpj || !setor || !email) {
@@ -131,7 +131,7 @@ const updateCompany = async (req, res) => {
             cnpj,
             setor,
             email,
-            isDisabled
+            status
         };
 
         // Atualizar a senha apenas se ela for fornecida
@@ -177,7 +177,7 @@ const toggleCompanyStatus = async (req, res) => {
         if (!company) {
             return res.status(404).send('Empresa não encontrada');
         }
-        company.isDisabled = !company.isDisabled;
+        company.status = !company.status;
         await company.save();
         res.send(company);
     } catch (error) {

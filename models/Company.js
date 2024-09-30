@@ -8,7 +8,7 @@ const CompanySchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true },
     logo: { type: String },
-    isDisabled: { type: Boolean, default: false }
+    status: { type: Boolean }
 });
 
 CompanySchema.methods.comparePassword = function (senha) {

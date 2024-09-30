@@ -7,7 +7,7 @@ const validateCompany = (req, res, next) => {
         setor: Joi.string().required(),
         email: Joi.string().email().required(),
         senha: Joi.string().min(6).required(),
-        isDisabled: Joi.boolean(),
+        status: Joi.boolean(),
         logo: Joi.string()
     });
 
