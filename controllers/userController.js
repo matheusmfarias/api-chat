@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
-const { sendConfirmationEmail } = require('../services/emailService');
+const { sendChangeEmail } = require('../services/emailChangeEmailService');
 const { createToken } = require('../services/tokenService');
 const JobApplication = require('../models/JobApplication');
 
@@ -190,7 +190,8 @@ const requestEmailChange = async (req, res) => {
         user.tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
         await user.save();
 
-        sendConfirmationEmail(email, emailVerificationToken);
+        // Passa o nome do usuário ao chamar a função
+        sendChangeEmail(email, user.nome, emailVerificationToken);
 
         res.status(200).send('Um token de verificação foi enviado para o novo e-mail.');
     } catch (error) {
@@ -233,7 +234,7 @@ const resendEmailToken = async (req, res) => {
         user.tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
         await user.save();
 
-        sendConfirmationEmail(email, emailVerificationToken);
+        sendChangeEmail(email, user.nome, emailVerificationToken);
 
         res.status(200).send('Token reenviado com sucesso!');
     } catch (error) {

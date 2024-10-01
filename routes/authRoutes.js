@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Admin = require('../models/Admin');
 const Company = require('../models/Company');
-const { sendConfirmationEmail } = require('../services/emailService');
+const { sendConfirmationEmail } = require('../services/emailRegisterService');
+const { sendChangePasswordEmail } = require('../services/emailChangePasswordService');
 const { createToken, encrypt } = require('../services/tokenService');
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.post('/register', async (req, res) => {
         await user.save();
 
         sendConfirmationEmail(email, verificationToken);
-        
+
         res.status(201).send('Usuário cadastrado com sucesso! Verifique seu e-mail para confirmar o cadastro.');
     } catch (error) {
         res.status(400).send(error.message);
@@ -139,8 +140,85 @@ router.post('/login', async (req, res) => {
         res.status(200).json({ token, firstLogin, role });
 
     } catch (error) {
-        console.log('Erro ao fazer login:', error);
         res.status(500).send('Erro ao fazer login. Por favor, tente novamente mais tarde.');
+    }
+});
+
+// Verifica se e-mail existe
+router.post('/verifica-email', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        let user = await User.findOne({ email });
+
+        // Se o usuário não foi encontrado, procure na coleção de administradores
+        if (!user) {
+            user = await Admin.findOne({ email });
+        }
+
+        // Verifica se o usuário existe
+        if (!user) {
+            return res.status(400).send('E-mail não cadastrado!');
+        }
+
+        const emailVerificationToken = createToken();
+
+        user.emailVerificationToken = emailVerificationToken;
+
+        user.tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+        await user.save();
+
+        sendChangePasswordEmail(email, user.nome, emailVerificationToken);
+
+        res.status(200).send('Um código de verificação foi enviado para o novo e-mail.');
+    } catch (error) {
+        res.status(500).send('Erro durante a solicitação. Por favor, tente novamente mais tarde.');
+    }
+});
+
+router.post('/valida-token-recuperacao', async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        let user = await User.findOne({ emailVerificationToken: token, tokenExpiry: { $gt: Date.now() } });
+
+        if (!user) {
+            return res.status(400).send('Token inválido ou expirado.');
+        }
+
+        res.status(200).send('Token válido.');
+    } catch (error) {
+        res.status(500).send('Erro ao validar o token.');
+    }
+});
+
+router.post('/redefinir-senha', async (req, res) => {
+    const { token, novaSenha } = req.body;
+
+    try {
+        // Localiza o usuário pelo token e verifica se o token ainda é válido
+        let user = await User.findOne({ emailVerificationToken: token, tokenExpiry: { $gt: Date.now() } });
+
+        if (!user) {
+            return res.status(400).send('Token inválido ou expirado.');
+        }
+
+        // Gerar o hash da nova senha antes de salvar
+        const hashedPassword = await bcrypt.hash(novaSenha, 10);
+
+        // Atualiza a senha do usuário
+        user.senha = hashedPassword;
+        user.emailVerificationToken = undefined;  // Remove o token após o uso
+        user.tokenExpiry = undefined;
+
+        // Salva o usuário com a nova senha hashada
+        await user.save();
+
+        res.status(200).send('Senha alterada com sucesso.');
+    } catch (error) {
+        console.error('Erro ao redefinir a senha:', error);
+        res.status(500).send('Erro ao redefinir a senha.');
     }
 });
 

@@ -13,8 +13,8 @@ router.post('/complete-setup', auth, UserController.completeSetup);
 router.post('/check-availability', UserController.checkAvailability);
 router.get('/candidato', auth, UserController.getCandidato);
 router.post('/change-email', auth, UserController.requestEmailChange);
-router.post('/verify-email', UserController.verifyEmailToken);
-router.post('/resend-email-token', UserController.resendEmailToken);
+router.post('/verify-email', auth, UserController.verifyEmailToken);
+router.post('/resend-email-token', auth, UserController.resendEmailToken);
 
 // Rotas para experiências
 router.post('/experiences', auth, UserController.addExperience);

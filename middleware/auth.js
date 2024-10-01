@@ -27,7 +27,7 @@ const auth = async (req, res, next) => {
             return res.status(404).send('User not found');
         }
 
-        // Renova o token antes de passar para a próxima etapa
+        // Renova o token (Opcional, como discutido acima)
         const newToken = jwt.sign({ userId: user._id, role: decoded.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.setHeader('Authorization', `Bearer ${newToken}`);
 
