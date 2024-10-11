@@ -1,24 +1,28 @@
 const nodemailer = require('nodemailer');
-const path = require('path');
 
-// Configuração do transporter (ajuste com seu serviço de e-mail)
+// Configuração do transporter com as novas configurações
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // ou qualquer outro serviço que você estiver usando
-  auth: {
-    user: process.env.EMAIL_USER, // Seu e-mail
-    pass: process.env.EMAIL_PASS  // Sua senha ou chave de API
-  }
+    host: 'mail.coprel.net.br',
+    port: 587,
+    secure: false, // STARTTLS, então não usamos 'secure' como true
+    auth: {
+        user: 'noreply@acipanambi.com.br', // Substitua pelo e-mail real
+        pass: '0wuKRE3Oro74953' // Substitua pela senha real
+    },
+    tls: {
+        rejectUnauthorized: false // Permite conexões para servidores com certificados SSL autoassinados
+    }
 });
 
 // Função para enviar o e-mail de confirmação
 const sendConfirmationEmail = (userEmail, userName, token) => {
-  const verificationLink = `http://localhost:3000/verificacao-token?email=${encodeURIComponent(userEmail)}&token=${token}`;
+    const verificationLink = `http://10.7.10.66:3000/verificacao-token?email=${encodeURIComponent(userEmail)}&token=${token}`;
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: userEmail,
-    subject: `${userName}, confirme seu e-mail`,
-    html: `
+    const mailOptions = {
+        from: '"ACI Empregos" <noreply@acipanambi.com.br>',
+        to: userEmail,
+        subject: `${userName}, confirme seu e-mail`,
+        html: `
       <!DOCTYPE html
     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="pt"
@@ -194,16 +198,16 @@ const sendConfirmationEmail = (userEmail, userName, token) => {
 </body>
 </html>
     `
-  };
+    };
 
-  // Enviar o e-mail
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Erro ao enviar o e-mail: ', error);
-    } else {
-      console.log('E-mail enviado: ' + info.response);
-    }
-  });
+    // Enviar o e-mail
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Erro ao enviar o e-mail: ', error);
+        } else {
+            console.log('E-mail enviado: ' + info.response);
+        }
+    });
 };
 
 module.exports = { sendConfirmationEmail };

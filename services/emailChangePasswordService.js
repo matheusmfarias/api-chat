@@ -1,20 +1,24 @@
 const nodemailer = require('nodemailer');
-const path = require('path');
 
-// Configuração do transporter (ajuste com seu serviço de e-mail)
+// Configuração do transporter com as novas configurações
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // ou qualquer outro serviço que você estiver usando
+    host: 'mail.coprel.net.br',
+    port: 587,
+    secure: false, // STARTTLS, então não usamos 'secure' como true
     auth: {
-        user: process.env.EMAIL_USER, // Seu e-mail
-        pass: process.env.EMAIL_PASS  // Sua senha ou chave de API
+        user: 'noreply@acipanambi.com.br', // Substitua pelo e-mail real
+        pass: '0wuKRE3Oro74953' // Substitua pela senha real
+    },
+    tls: {
+        rejectUnauthorized: false // Permite conexões para servidores com certificados SSL autoassinados
     }
 });
 
 // Função para enviar o e-mail de confirmação
 const sendChangePasswordEmail = (userEmail, userName, token) => {
-    const verificationLink = `http://localhost:3000/recupera-senha?token=${token}`;
+    const verificationLink = `http://10.7.10.66:3000/recupera-senha?token=${token}`;
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: '"ACI Empregos" <noreply@acipanambi.com.br>',
         to: userEmail,
         subject: `Solicitação de alteração de senha`,
         html: `

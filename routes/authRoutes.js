@@ -30,10 +30,11 @@ router.post('/register', async (req, res) => {
 
         await user.save();
 
-        sendConfirmationEmail(email, verificationToken);
+        sendConfirmationEmail(email, nome, verificationToken);
 
         res.status(201).send('Usuário cadastrado com sucesso! Verifique seu e-mail para confirmar o cadastro.');
     } catch (error) {
+        console.log(error);
         res.status(400).send(error.message);
     }
 });
@@ -77,7 +78,7 @@ router.post('/resend-token', async (req, res) => {
         user.tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
         await user.save();
 
-        sendConfirmationEmail(email, verificationToken);
+        sendConfirmationEmail(email, user.nome, verificationToken);
 
         res.status(200).send('Token reenviado com sucesso!');
     } catch (error) {

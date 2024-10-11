@@ -3,21 +3,25 @@ const bcrypt = require('bcryptjs');
 
 const ExperienceSchema = new mongoose.Schema({
     empresa: { type: String, required: true },
-    mesInicial: { type: String, required: true },
-    anoInicial: { type: Number, required: true },
-    mesFinal: { type: String, required: false },
-    anoFinal: { type: Number, required: false },
-    funcao: { type: String, required: true },
-    atividades: { type: String, required: true },
-    trabalhoAtualmente: { type: Boolean, required: true, default: false }
+    mesInicial: { type: String },
+    anoInicial: { type: Number },
+    mesFinal: { type: String },
+    anoFinal: { type: Number },
+    funcao: { type: String },
+    atividades: { type: String },
+    trabalhoAtualmente: { type: Boolean, default: false }
 });
 
 const FormacaoSchema = new mongoose.Schema({
     instituicao: { type: String, required: true },
-    escolaridade: { type: String, required: true },
-    curso: { type: String, required: false },
+    mesInicial: { type: String },
+    anoInicial: { type: Number },
+    mesFinal: { type: String },
+    anoFinal: { type: Number },
+    escolaridade: { type: String },
+    curso: { type: String },
     grau: { type: String },
-    situacao: { type: String, required: true }
+    situacao: { type: String }
 });
 
 const UserSchema = new mongoose.Schema({
@@ -42,7 +46,7 @@ const UserSchema = new mongoose.Schema({
         maritalStatus: { type: String },
         contactPhone: { type: String },
         backupPhone: { type: String },
-        rg: { type: String, unique: true },
+        rg: { type: String },
         cnh: { type: Boolean }, // Alterado para Boolean
         cnhTypes: [{ type: String }] // Mantido como array de strings
     },
