@@ -536,10 +536,31 @@ const getCandidatos = async (req, res) => {
     const query = {};
 
     if (search) {
+        const searchRegex = new RegExp(search, 'i'); // 'i' para case insensitive
+
         query.$or = [
-            { nome: new RegExp(search, 'i') },
-            { sobrenome: new RegExp(search, 'i') },
-            { email: new RegExp(search, 'i') }
+            // Campos principais
+            { nome: searchRegex },
+            { sobrenome: searchRegex },
+            { email: searchRegex },
+
+            // Subdocumentos de experiência
+            { 'experiences.empresa': searchRegex },
+            { 'experiences.funcao': searchRegex },
+            { 'experiences.atividades': searchRegex },
+
+            // Subdocumentos de formação
+            { 'formacao.instituicao': searchRegex },
+            { 'formacao.curso': searchRegex },
+            { 'formacao.escolaridade': searchRegex },
+            { 'formacao.grau': searchRegex },
+            { 'formacao.situacao': searchRegex },
+
+            // Arrays simples
+            { cursos: searchRegex },
+            { habilidadesProfissionais: searchRegex },
+            { habilidadesComportamentais: searchRegex },
+            { objetivos: searchRegex }
         ];
     }
 
