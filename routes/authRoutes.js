@@ -131,6 +131,10 @@ router.post('/login', async (req, res) => {
             return res.status(400).send('E-mail não confirmado. Por favor, verifique seu e-mail.');
         }
 
+        // Atualiza o campo lastAccess com a data e hora atual
+        user.lastAccess = Date.now();
+        await user.save(); // Salva a atualização no banco de dados
+
         // Cria um token JWT para o usuário ou administrador
         const token = jwt.sign({ userId: user._id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 

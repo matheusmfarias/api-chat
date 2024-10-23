@@ -564,6 +564,10 @@ const getCandidatos = async (req, res) => {
         ];
     }
 
+    // Data limite de 6 meses atrás
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
     try {
         const candidatos = await User.find(query)
             .limit(Number(limit))
@@ -571,8 +575,14 @@ const getCandidatos = async (req, res) => {
             .exec();
         const count = await User.countDocuments(query);
 
+        // Adiciona o campo isInactive aos candidatos que não acessaram há mais de 6 meses
+        const candidatosWithStatus = candidatos.map((candidato) => ({
+            ...candidato.toObject(),
+            isInactive: candidato.lastAccess ? new Date(candidato.lastAccess) < sixMonthsAgo : true
+        }));
+
         res.json({
-            candidates: candidatos,
+            candidates: candidatosWithStatus,
             totalPages: Math.ceil(count / Number(limit)),
             currentPage: Number(page)
         });

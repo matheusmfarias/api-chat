@@ -35,6 +35,7 @@ const UserSchema = new mongoose.Schema({
     verificationToken: { type: String },
     emailVerificationToken: { type: String },
     tokenExpiry: { type: Date },
+    lastAccess: { type: Date },
     profilePicture: { type: String },
     address: {
         street: { type: String },
