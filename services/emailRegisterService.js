@@ -122,8 +122,8 @@ const sendConfirmationEmail = (userEmail, userName, token) => {
                                                                     <p style="color:#1f58a2;font-size:18px">
                                                                         Você está recebendo esse e-mail pois se
                                                                         cadastrou recentemente em nosso sistema de
-                                                                        currículos.<br><br>
-                                                                        Confirme seu e-mail usando o código abaixo ou
+                                                                        empregos.<br><br>
+                                                                        Confirme seu cadastro usando o código abaixo ou
                                                                         clicando no botão de confirmação.
                                                                     </p>
                                                                     <h2

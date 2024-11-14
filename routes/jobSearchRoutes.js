@@ -1,6 +1,6 @@
 const express = require('express');
 const auth = require('../middleware/auth');
-const JobSearchController = require('../controllers/JobSearchController');
+const JobSearchController = require('../controllers/jobSearchController');
 
 const router = express.Router();
 
