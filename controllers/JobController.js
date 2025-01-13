@@ -204,8 +204,7 @@ const submitCurriculum = async (req, res) => {
 
         res.status(201).json({ message: 'Currículo submetido com sucesso!' });
     } catch (error) {
-        console.error('Erro ao submeter currículo:', error);
-        res.status(500).json({ error: 'Erro ao submeter currículo. Tente novamente mais tarde.' });
+        res.status(500).json({ error });
     }
 };
 

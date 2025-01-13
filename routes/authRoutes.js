@@ -58,6 +58,36 @@ router.post('/verify', async (req, res) => {
         res.status(200).send('Verificação bem-sucedida.');
     } catch (error) {
         res.status(500).send('Erro ao verificar o token.');
+    }   
+});
+
+// Rota para verificar o token diretamente
+router.get('/verify', async (req, res) => {
+    const { email, token } = req.query;
+
+    if (!email || !token) {
+        return res.status(400).json({ message: 'Parâmetros inválidos.' });
+    }
+
+    try {
+        // Verificar se o token é válido
+        const user = await User.findOne({ email, verificationToken: token, tokenExpiry: { $gt: Date.now() } });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Token inválido ou expirado.' });
+        }
+
+        // Marcar o usuário como verificado
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.tokenExpiry = undefined;
+        await user.save();
+
+        // Redirecionar para a tela de token com a mensagem de sucesso
+        return res.redirect(`https://aciempregos.com.br/verificacao-token?verified=success`);
+    } catch (error) {
+        console.error('Erro ao verificar o token:', error);
+        return res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
 

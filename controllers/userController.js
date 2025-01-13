@@ -606,7 +606,7 @@ const getUserApplications = async (req, res) => {
     try {
         // Pega o ID do usuário a partir do token de autenticação (req.user._id)
         const userId = req.user._id;
-        const { page = 1, limit = 10, searchTerm } = req.query;
+        const { page = 1, limit = 9, searchTerm } = req.query;
 
         // Monta o pipeline de agregação
         const pipeline = [

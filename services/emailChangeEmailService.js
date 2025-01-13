@@ -66,7 +66,7 @@ const sendChangeEmail = (userEmail, userName, token) => {
                                                                 <td align="center" style="font-size:0px"><a
                                                                         target="_blank"
                                                                         href="https://acipanambi.com/"><img
-                                                                            src="https://fchiinm.stripocdn.email/content/guids/CABINET_39954f1b426f56a05fc7c8112df428644f5e0edd52492654c4e23959c997f9b3/images/logositeacitransparente_GWi.png"
+                                                                        src="http://aciempregos.com.br/assets/logo-aci-transparente.png"
                                                                             height="91" width="162.5"></a></td>
                                                             </tr>
                                                         </table>
@@ -139,7 +139,7 @@ const sendChangeEmail = (userEmail, userName, token) => {
                                                                         <tr>
                                                                             <td align="left"
                                                                                 style="font-size:18px;color:#1f58a2">
-                                                                                Obrigado,<br><br>ACI Panambi</td>
+                                                                                Obrigado,<br><br>ACI Empregos</td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td align="center"

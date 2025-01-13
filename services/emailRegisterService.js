@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 
 // Função para enviar o e-mail de confirmação
 const sendConfirmationEmail = (userEmail, userName, token) => {
-    const verificationLink = `http://10.7.10.66:3000/verificacao-token?email=${encodeURIComponent(userEmail)}&token=${token}`;
+    const verificationLink = `https://aciempregos.com.br/api/auth/verify?email=${encodeURIComponent(userEmail)}&token=${token}`;
 
     const mailOptions = {
         from: '"ACI Empregos" <noreply@acipanambi.com.br>',
@@ -67,8 +67,8 @@ const sendConfirmationEmail = (userEmail, userName, token) => {
                                                             <tr>
                                                                 <td align="center" style="font-size:0px"><a
                                                                         target="_blank"
-                                                                        href="https://acipanambi.com/"><img
-                                                                            src="https://fchiinm.stripocdn.email/content/guids/CABINET_39954f1b426f56a05fc7c8112df428644f5e0edd52492654c4e23959c997f9b3/images/logositeacitransparente_GWi.png"
+                                                                        href="https://aciempregos.com.br/"><img
+                                                                            src="http://aciempregos.com.br/assets/logo-aci-transparente.png"
                                                                             height="91" width="162.5"></a></td>
                                                             </tr>
                                                         </table>
@@ -132,8 +132,7 @@ const sendConfirmationEmail = (userEmail, userName, token) => {
                                                                     </h2>
                                                                     <div align="center" style="padding: 20px 0;">
                                                                         <a href="${verificationLink}" class="es-button"
-                                                                            style="color:#FFFFFF;font-size:22px;padding:15px 20px;background:#1f58a2;border-radius:30px;text-align:center">Confirmar
-                                                                            e-mail</a>
+                                                                            style="color:#FFFFFF;font-size:22px;padding:15px 20px;background:#1f58a2;border-radius:30px;text-align:center">Confirmar</a>
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -149,10 +148,10 @@ const sendConfirmationEmail = (userEmail, userName, token) => {
                                                                         <tr>
                                                                             <td align="left"
                                                                                 style="font-size:18px;color:#1f58a2">
-                                                                                Obrigado,<br><br>ACI Panambi</td>
+                                                                                Obrigado,<br><br>ACI Empregos</td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <td align="center"
+                                                                            <td align="COenter"
                                                                                 style="padding:10px 0;font-size:0px;border-bottom:1px solid #666666">
                                                                             </td>
                                                                         </tr>
@@ -176,7 +175,7 @@ const sendConfirmationEmail = (userEmail, userName, token) => {
                                                                         <tr>
                                                                             <td align="center"
                                                                                 style="padding-top:20px;font-size:14px;color:#2D3142">
-                                                                                Copyright © 2024 ACI Panambi</td>
+                                                                                Copyright © 2024 ACI Empregos</td>
                                                                         </tr>
                                                                     </table>
                                                                 </td>

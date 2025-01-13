@@ -38,7 +38,6 @@ const auth = async (req, res, next) => {
 
         next();  // Passa para o próximo middleware ou rota
     } catch (error) {
-        console.error('Auth error:', error.message);
         return res.status(401).send("Por favor, autentique-se");
     }
 };
