@@ -9,10 +9,8 @@ const getJobs = async (req, res) => {
             modality,
             type,
             pcd,
-            minSalary,
-            maxSalary,
-            page = 1,  // Página padrão 1
-            limit = 10 // Limite padrão 10
+            page = 1,
+            limit = 10
         } = req.query;
 
         const filters = { status: true }; // Apenas vagas ativas
@@ -37,16 +35,17 @@ const getJobs = async (req, res) => {
         }
 
         // Filtro por modalidade, tipo e PcD
-        if (modality) filters.modality = modality;
-        if (type) filters.type = type;
-        if (pcd !== undefined) filters.pcd = pcd === 'true';
-
-        // Filtro por faixa salarial
-        if (minSalary || maxSalary) {
-            filters.salary = {};
-            if (minSalary) filters.salary.$gte = Number(minSalary);
-            if (maxSalary) filters.salary.$lte = Number(maxSalary);
+        if (modality) {
+            const modalities = Array.isArray(modality) ? modality : [modality];
+            filters.modality = { $in: modalities };
         }
+
+        if (type) {
+            const types = Array.isArray(type) ? type : [type];
+            filters.type = { $in: types };
+        }
+
+        if (pcd !== undefined) filters.pcd = pcd === 'true';
 
         // Cálculo de paginação
         const skip = (Number(page) - 1) * Number(limit);
@@ -81,7 +80,7 @@ const getJobById = async (req, res) => {
         const job = await Job.findById(req.params.id)
             .populate({
                 path: 'company',
-                select: 'nome' // Seleciona apenas o nome da empresa
+                select: 'nome'
             });
 
         if (!job) {

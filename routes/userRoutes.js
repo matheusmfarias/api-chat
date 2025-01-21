@@ -53,5 +53,6 @@ router.get('/candidatos', auth, UserController.getCandidatos);
 router.get('/candidato/:candidatoId', auth, UserController.getCandidatoById);
 
 router.get('/applications', auth, UserController.getUserApplications);
+router.get('/applications/:applicationId', auth, UserController.getUserApplicationsById);
 
 module.exports = router;

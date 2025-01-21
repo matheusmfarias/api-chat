@@ -4,6 +4,7 @@ const path = require('path');
 const { sendChangeEmail } = require('../services/emailChangeEmailService');
 const { createToken } = require('../services/tokenService');
 const JobApplication = require('../models/JobApplication');
+const Job = require('../models/Job');
 
 const updateProfilePicture = async (req, res) => {
     try {
@@ -604,75 +605,116 @@ const getCandidatoById = async (req, res) => {
 
 const getUserApplications = async (req, res) => {
     try {
-        // Pega o ID do usuário a partir do token de autenticação (req.user._id)
-        const userId = req.user._id;
-        const { page = 1, limit = 9, searchTerm } = req.query;
+        const userId = req.user._id; // ID do usuário autenticado
+        const {
+            searchTerm,
+            state,
+            city,
+            modality,
+            type,
+            pcd,
+            status,
+            page = 1,
+            limit = 9
+        } = req.query;
 
-        // Monta o pipeline de agregação
-        const pipeline = [
-            { $match: { user: userId } }, // Filtra as candidaturas pelo ID do usuário
-            {
-                $lookup: {
-                    from: 'jobs', // Tabela/coleção de vagas
-                    localField: 'job',
-                    foreignField: '_id',
-                    as: 'job'
-                }
-            },
-            { $unwind: '$job' }, // Desfaz o array de jobs
-            {
-                $lookup: {
-                    from: 'companies', // Tabela/coleção de empresas
-                    localField: 'job.company',
-                    foreignField: '_id',
-                    as: 'job.company'
-                }
-            },
-            { $unwind: '$job.company' }, // Desfaz o array de empresas
-        ];
+        const filters = {};
 
-        // Se houver um termo de busca, aplicamos o filtro no título do cargo e no nome da empresa
-        if (searchTerm && searchTerm.trim() !== "") {
-            const regex = new RegExp(searchTerm, 'i'); // Cria uma expressão regular para busca case-insensitive
-
-            // Filtro para considerar o campo identifyCompany
-            pipeline.push({
-                $match: {
-                    $or: [
-                        { 'job.title': regex }, // Busca no título do cargo
-                        {
-                            'job.identifyCompany': true,    // Só busca pelo nome da empresa se identifyCompany for true
-                            'job.company.nome': regex
-                        }
-                    ]
-                }
-            });
+        // Filtrar por título da vaga e combinar com outros campos
+        if (searchTerm) {
+            filters.$or = [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { location: { $regex: searchTerm, $options: 'i' } },
+                { modality: { $regex: searchTerm, $options: 'i' } },
+                { type: { $regex: searchTerm, $options: 'i' } }
+            ];
         }
 
-        // Adiciona a etapa de paginação
-        pipeline.push(
-            { $sort: { submissionDate: -1 } }, // Ordena por data de inscrição mais recente
-            { $skip: (page - 1) * limit },
-            { $limit: parseInt(limit) }
-        );
+        // Filtro por estado e cidade
+        if (state && city) {
+            filters.location = { $regex: `${city}, ${state}`, $options: 'i' };
+        } else if (state) {
+            filters.location = { $regex: state, $options: 'i' };
+        } else if (city) {
+            filters.location = { $regex: city, $options: 'i' };
+        }
 
-        // Executa a agregação
-        let applications = await JobApplication.aggregate(pipeline);
+        // Filtro por modalidade, tipo e PcD
+        if (modality) {
+            const modalities = Array.isArray(modality) ? modality : [modality];
+            filters.modality = { $in: modalities };
+        }
 
-        // Conta o número total de candidaturas (para paginação)
-        const totalApplicationsPipeline = [...pipeline.slice(0, pipeline.length - 3), { $count: 'total' }]; // Retira skip e limit
-        const totalApplicationsResult = await JobApplication.aggregate(totalApplicationsPipeline);
-        const totalApplications = totalApplicationsResult[0] ? totalApplicationsResult[0].total : 0;
+        if (type) {
+            const types = Array.isArray(type) ? type : [type];
+            filters.type = { $in: types };
+        }
 
-        // Retorna as candidaturas e o total de páginas
+        if (pcd !== undefined) {
+            filters.pcd = pcd === 'true';
+        }
+
+        if (status !== undefined) {
+            filters.status = status === 'true';
+        }
+
+        const skip = (Number(page) - 1) * Number(limit);
+
+        // Consultar candidaturas do usuário com base nos filtros de vaga
+        const applicationsQuery = JobApplication.find({ user: userId })
+            .populate({
+                path: 'job',
+                match: filters,
+                select: 'title location modality type salary pcd identifyCompany status closingDate',
+                populate: {
+                    path: 'company',
+                    select: 'nome'
+                }
+            })
+            .sort({ submissionDate: -1 });
+
+        // Executar a consulta para obter todas as candidaturas que correspondem aos filtros
+        const allApplications = await applicationsQuery;
+        const filteredApplications = allApplications.filter((application) => application.job !== null);
+
+        // Aplicar paginação aos dados filtrados
+        const paginatedApplications = filteredApplications.slice(skip, skip + Number(limit));
+
         res.status(200).json({
-            applications,
-            totalPages: Math.ceil(totalApplications / limit),
-            currentPage: parseInt(page)
+            applications: paginatedApplications, // Dados paginados
+            totalApplications: filteredApplications.length, // Total de candidaturas após filtros
+            totalPages: Math.ceil(filteredApplications.length / Number(limit)),
+            currentPage: Number(page),
         });
     } catch (error) {
-        console.error('Erro ao buscar candidaturas do usuário:', error);
-        res.status(500).send('Erro ao buscar candidaturas do usuário.');
+        console.error('Erro ao buscar candidaturas do usuário:', error.message, error.stack);
+        res.status(500).json({ error: 'Erro ao buscar candidaturas do usuário. Tente novamente mais tarde.' });
+    }
+};
+
+const getUserApplicationsById = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { applicationId } = req.params;
+
+        const application = await JobApplication.findOne({ _id: applicationId, user: userId })
+            .populate({
+                path: 'job',
+                select: 'title location modality type description responsabilities qualifications additionalInfo requirements offers pcd salary identifyCompany',
+                populate: {
+                    path: 'company',
+                    select: 'nome'
+                }
+            });
+
+        if (!application) {
+            return res.status(404).json({ error: 'Aplicação não encontrada ou você não tem acesso a ela.' });
+        }
+
+        res.status(200).json(application);
+    } catch (error) {
+        console.error('Erro ao buscar detalhes da aplicação:', error.message, error.stack);
+        res.status(500).json({ error: 'Erro ao buscar detalhes da aplicação. Tente novamente mais tarde.' });
     }
 };
 
@@ -709,4 +751,5 @@ module.exports = {
     getCandidatos,
     getCandidatoById,
     getUserApplications,
+    getUserApplicationsById
 };
