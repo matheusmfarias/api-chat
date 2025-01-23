@@ -19,22 +19,20 @@ const getJobs = async (req, res) => {
         if (keyword) {
             filters.$or = [
                 { title: { $regex: keyword, $options: 'i' } },
-                { location: { $regex: keyword, $options: 'i' } },
+                { state: { $regex: keyword, $options: 'i' } },
+                { city: { $regex: keyword, $options: 'i' } },
                 { modality: { $regex: keyword, $options: 'i' } },
                 { type: { $regex: keyword, $options: 'i' } }
             ];
         }
 
-        // Filtro por estado e cidade
-        if (state && city) {
-            filters.location = { $regex: `${city}, ${state}`, $options: 'i' };
-        } else if (state) {
-            filters.location = { $regex: state, $options: 'i' };
-        } else if (city) {
-            filters.location = { $regex: city, $options: 'i' };
+        if (state) {
+            filters.state = { $regex: state, $options: 'i' };
+        }
+        if (city) {
+            filters.city = { $regex: city, $options: 'i' };
         }
 
-        // Filtro por modalidade, tipo e PcD
         if (modality) {
             const modalities = Array.isArray(modality) ? modality : [modality];
             filters.modality = { $in: modalities };
@@ -53,7 +51,7 @@ const getJobs = async (req, res) => {
         // Busca paginada e ordenada por data de publicação (mais recentes primeiro)
         const totalJobs = await Job.countDocuments(filters); // Conta total de vagas
         const jobs = await Job.find(filters)
-            .select('title location modality type salary pcd identifyCompany company publicationDate')
+            .select('title state city modality type salary pcd identifyCompany company publicationDate')
             .populate({
                 path: 'company',
                 select: 'nome'

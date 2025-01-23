@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const JobSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    location: { type: String, required: true },
+    state: { type: String, required: true },
+    city: { type: String, required: true },
     modality: { type: String, required: true },
     type: { type: String, required: true },
     status: { type: Boolean, default: true },

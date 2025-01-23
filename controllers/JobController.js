@@ -4,51 +4,71 @@ const mongoose = require('mongoose');
 
 const getJobs = async (req, res) => {
     try {
-        const { keyword, modality, type, status, pcd, location } = req.query;
+        const { keyword, modality, type, status, pcd, state, city, page = 1, limit = 9 } = req.query;
+
         const filters = { company: req.user._id };
 
-        // Filtro por título
         if (keyword) {
-            filters.title = { $regex: keyword, $options: 'i' };
+            filters.$or = [
+                { title: { $regex: keyword, $options: 'i' } },
+                { state: { $regex: keyword, $options: 'i' } },
+                { city: { $regex: keyword, $options: 'i' } },
+                { modality: { $regex: keyword, $options: 'i' } },
+                { type: { $regex: keyword, $options: 'i' } }
+            ];
         }
 
-        // Filtro por modalidade (pode ser múltiplo)
         if (modality) {
-            filters.modality = Array.isArray(modality) ? { $in: modality } : modality;
+            const modalities = Array.isArray(modality) ? modality : [modality];
+            filters.modality = { $in: modalities };
         }
 
-        // Filtro por tipo (pode ser múltiplo)
         if (type) {
-            filters.type = Array.isArray(type) ? { $in: type } : type;
+            const types = Array.isArray(type) ? type : [type];
+            filters.type = { $in: types };
         }
 
-        // Filtro por status
         if (status) {
             filters.status = status === 'true';
         }
 
-        // Filtro por PCD
-        if (pcd) {
-            filters.pcd = pcd === 'true';
+        if (pcd !== undefined) filters.pcd = pcd === 'true';
+
+        if (state) {
+            filters.state = { $regex: state, $options: 'i' };
+        }
+        if (city) {
+            filters.city = { $regex: city, $options: 'i' };
         }
 
-        // Filtro por localização
-        if (location) {
-            filters.location = { $regex: location, $options: 'i' };
-        }
+        const skip = (Number(page) - 1) * Number(limit);
 
-        const jobs = await Job.find(filters).populate('company', 'nome');
+        const totalJobs = await Job.countDocuments(filters);
+        const jobs = await Job.find(filters)
+            .select('title state city modality type salary pcd identifyCompany company publicationDate closingDate status')
+            .populate({
+                path: 'company',
+                select: 'nome'
+            })
+            .sort({ publicationDate: -1 })
+            .skip(skip)
+            .limit(Number(limit));
 
-        res.json(jobs.length ? jobs : []);
+        res.json({
+            jobs,
+            totalJobs,
+            totalPages: Math.ceil(totalJobs / Number(limit)),
+            currentPage: Number(page),
+        });
     } catch (error) {
-        console.error('Erro ao buscar vagas:', error);
-        res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde.' });
+        console.error('Erro ao buscar vagas:', error.message, error.stack);
+        res.status(500).json({ error: 'Erro ao buscar vagas. Tente novamente mais tarde' });
     }
 };
 
 const addJob = async (req, res) => {
     const {
-        title, location, modality, type, status, publicationDate, description,
+        title, state, city, modality, type, status, publicationDate, description,
         responsibilities, qualifications, additionalInfo, requirements,
         offers, pcd, salary, identifyCompany
     } = req.body;
@@ -56,7 +76,8 @@ const addJob = async (req, res) => {
     try {
         const newJob = new Job({
             title,
-            location,
+            state,
+            city,
             modality,
             type,
             status,
@@ -84,7 +105,7 @@ const addJob = async (req, res) => {
 const updateJob = async (req, res) => {
     const { id } = req.params;
     const {
-        title, location, modality, type, status, publicationDate, description,
+        title, state, city, modality, type, status, publicationDate, description,
         responsibilities, qualifications, additionalInfo, requirements,
         offers, pcd, salary, identifyCompany
     } = req.body;
@@ -98,7 +119,8 @@ const updateJob = async (req, res) => {
 
         // Atualiza os campos da vaga
         job.title = title;
-        job.location = location;
+        job.state = state;
+        job.city = city;
         job.modality = modality;
         job.type = type;
         job.publicationDate = publicationDate;
@@ -212,50 +234,63 @@ const submitCurriculum = async (req, res) => {
 const getJobApplications = async (req, res) => {
     try {
         const { jobId } = req.params;
-        const { page = 1, limit = 10, searchTerm } = req.query;
+        const { page = 1, limit = 9, searchTerm } = req.query;
 
-        if (!mongoose.Types.ObjectId.isValid(jobId)) {
-            return res.status(400).json({ error: 'ID da vaga inválido' });
-        }
+        const regex = searchTerm ? new RegExp(searchTerm, 'i') : null;
+        const skip = (Number(page) - 1) * Number(limit);
 
-        // Filtros iniciais para a vaga específica
-        const filters = { job: new mongoose.Types.ObjectId(jobId) };
+        // Pipeline do aggregate
+        const pipeline = [
+            { $match: { job: new mongoose.Types.ObjectId(jobId) } }, // Corrigido aqui
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'user',
+                },
+            },
+            { $unwind: '$user' }, // Transforma array de usuários em objetos
+        ];
 
-        // Realiza a busca inicial para obter candidaturas sem aplicar filtros de busca
-        let applications = await JobApplication.find(filters)
-            .populate('user', 'nome sobrenome email profilePicture experiences formacao')
-            .skip((page - 1) * limit)
-            .limit(parseInt(limit));
-
-        // Contagem do total de candidaturas (antes da aplicação do filtro de busca)
-        const totalApplications = await JobApplication.countDocuments(filters);
-
-        // Agora, se houver um termo de busca, vamos filtrar os resultados já populados
-        if (searchTerm && searchTerm.trim() !== "") {
-            const regex = new RegExp(searchTerm, 'i'); // 'i' para case-insensitive
-
-            applications = applications.filter((application) => {
-                const { user } = application;
-                const matchesName = regex.test(user.nome) || regex.test(user.sobrenome);
-                const matchesExperience = user.experiences?.some(exp => regex.test(exp.empresa) || regex.test(exp.funcao));
-                const matchesEducation = user.formacao?.some(edu => regex.test(edu.instituicao) || regex.test(edu.escolaridade) || regex.test(edu.curso));
-
-                // Retorna true se alguma das condições for atendida
-                return matchesName || matchesExperience || matchesEducation;
+        // Adiciona filtros ao pipeline se houver searchTerm
+        if (regex) {
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { 'user.nome': regex },
+                        { 'user.sobrenome': regex },
+                        { 'user.experiences.empresa': regex },
+                        { 'user.experiences.funcao': regex },
+                        { 'user.formacao.instituicao': regex },
+                        { 'user.formacao.curso': regex },
+                    ],
+                },
             });
         }
 
-        // Total de candidatos após a aplicação do filtro
-        const filteredApplicationsCount = applications.length;
+        // Adiciona paginação
+        pipeline.push({ $sort: { submissionDate: -1 } });
+        pipeline.push({ $skip: skip });
+        pipeline.push({ $limit: Number(limit) });
 
-        return res.json({
-            candidates: applications,
-            totalPages: Math.ceil(totalApplications / limit),  // Número total de páginas considerando todas as candidaturas
-            currentPage: parseInt(page),
-            filteredCount: filteredApplicationsCount, // Retorna a contagem após o filtro
+        // Executa a agregação
+        const applications = await JobApplication.aggregate(pipeline);
+
+        // Conta o total sem paginação
+        const totalApplicationsPipeline = pipeline.slice(0, -3); // Remove skip e limit
+        totalApplicationsPipeline.push({ $count: 'total' });
+        const totalApplicationsResult = await JobApplication.aggregate(totalApplicationsPipeline);
+        const totalApplications = totalApplicationsResult[0]?.total || 0;
+
+        res.status(200).json({
+            applications,
+            totalApplications,
+            totalPages: Math.ceil(totalApplications / Number(limit)),
+            currentPage: Number(page),
         });
     } catch (error) {
-        console.error('Erro ao buscar candidatos para a vaga:', error);
+        console.error('Erro ao buscar candidatos para a vaga:', error.message, error.stack);
         res.status(500).json({ error: 'Erro ao buscar candidatos para a vaga.' });
     }
 };

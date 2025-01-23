@@ -624,19 +624,18 @@ const getUserApplications = async (req, res) => {
         if (searchTerm) {
             filters.$or = [
                 { title: { $regex: searchTerm, $options: 'i' } },
-                { location: { $regex: searchTerm, $options: 'i' } },
+                { state: { $regex: searchTerm, $options: 'i' } },
+                { city: { $regex: searchTerm, $options: 'i' } },
                 { modality: { $regex: searchTerm, $options: 'i' } },
                 { type: { $regex: searchTerm, $options: 'i' } }
             ];
         }
 
-        // Filtro por estado e cidade
-        if (state && city) {
-            filters.location = { $regex: `${city}, ${state}`, $options: 'i' };
-        } else if (state) {
-            filters.location = { $regex: state, $options: 'i' };
-        } else if (city) {
-            filters.location = { $regex: city, $options: 'i' };
+        if (state) {
+            filters.state = { $regex: state, $options: 'i' };
+        }
+        if (city) {
+            filters.city = { $regex: city, $options: 'i' };
         }
 
         // Filtro por modalidade, tipo e PcD
@@ -665,7 +664,7 @@ const getUserApplications = async (req, res) => {
             .populate({
                 path: 'job',
                 match: filters,
-                select: 'title location modality type salary pcd identifyCompany status closingDate',
+                select: 'title state city modality type salary pcd identifyCompany status closingDate',
                 populate: {
                     path: 'company',
                     select: 'nome'
@@ -700,7 +699,7 @@ const getUserApplicationsById = async (req, res) => {
         const application = await JobApplication.findOne({ _id: applicationId, user: userId })
             .populate({
                 path: 'job',
-                select: 'title location modality type description responsabilities qualifications additionalInfo requirements offers pcd salary identifyCompany',
+                select: 'title state city modality type description responsabilities qualifications additionalInfo requirements offers pcd salary identifyCompany',
                 populate: {
                     path: 'company',
                     select: 'nome'
