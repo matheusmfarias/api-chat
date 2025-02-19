@@ -18,10 +18,10 @@ const FormacaoSchema = new mongoose.Schema({
     anoInicial: { type: Number },
     mesFinal: { type: String },
     anoFinal: { type: Number },
-    escolaridade: { type: String },
+    escolaridade: { type: String, required: true },
     curso: { type: String },
     grau: { type: String },
-    situacao: { type: String }
+    situacao: { type: String, required: true }
 });
 
 const UserSchema = new mongoose.Schema({

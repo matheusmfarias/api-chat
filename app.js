@@ -24,7 +24,6 @@ app.use('/api/admin', auth, adminRoutes);
 app.use('/api/jobs', auth, jobRoutes);
 app.use('/api/jobsSearch', auth, jobSearchRoutes);
 
-/*
 // Serve os arquivos estáticos do build do React
 app.use(express.static(path.join(__dirname, 'build')));
 
@@ -32,6 +31,5 @@ app.use(express.static(path.join(__dirname, 'build')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
-*/
 
 module.exports = app;

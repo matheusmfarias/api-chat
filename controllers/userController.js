@@ -607,7 +607,7 @@ const getUserApplications = async (req, res) => {
     try {
         const userId = req.user._id; // ID do usuário autenticado
         const {
-            searchTerm,
+            keyword,
             state,
             city,
             modality,
@@ -621,13 +621,13 @@ const getUserApplications = async (req, res) => {
         const filters = {};
 
         // Filtrar por título da vaga e combinar com outros campos
-        if (searchTerm) {
+        if (keyword) {
             filters.$or = [
-                { title: { $regex: searchTerm, $options: 'i' } },
-                { state: { $regex: searchTerm, $options: 'i' } },
-                { city: { $regex: searchTerm, $options: 'i' } },
-                { modality: { $regex: searchTerm, $options: 'i' } },
-                { type: { $regex: searchTerm, $options: 'i' } }
+                { title: { $regex: keyword, $options: 'i' } },
+                { state: { $regex: keyword, $options: 'i' } },
+                { city: { $regex: keyword, $options: 'i' } },
+                { modality: { $regex: keyword, $options: 'i' } },
+                { type: { $regex: keyword, $options: 'i' } }
             ];
         }
 

@@ -165,14 +165,16 @@ router.post('/login', async (req, res) => {
         user.lastAccess = Date.now();
         await user.save(); // Salva a atualização no banco de dados
 
+        const userId = user._id;
+
         // Cria um token JWT para o usuário ou administrador
-        const token = jwt.sign({ userId: user._id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: '4h' });
 
         // Verifica se é o primeiro login do usuário (aplica-se apenas para usuários normais)
         const firstLogin = role === 'user' ? !user.profileCompleted : false;
 
         // Retorna o token e o status do primeiro login ao cliente
-        res.status(200).json({ token, firstLogin, role });
+        res.status(200).json({ token, userId, firstLogin, role });
 
     } catch (error) {
         res.status(500).send('Erro ao fazer login. Por favor, tente novamente mais tarde.');

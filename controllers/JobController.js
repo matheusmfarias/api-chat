@@ -234,9 +234,9 @@ const submitCurriculum = async (req, res) => {
 const getJobApplications = async (req, res) => {
     try {
         const { jobId } = req.params;
-        const { page = 1, limit = 9, searchTerm } = req.query;
+        const { page = 1, limit = 9, keyword } = req.query;
 
-        const regex = searchTerm ? new RegExp(searchTerm, 'i') : null;
+        const regex = keyword ? new RegExp(keyword, 'i') : null;
         const skip = (Number(page) - 1) * Number(limit);
 
         // Pipeline do aggregate
